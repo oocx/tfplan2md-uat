@@ -79,7 +79,7 @@ No changes.
 {{ end }}
 
 {{ if large_attrs.size > 0 }}
-<br/>
+{{ if small_attrs.size > 0 || change.tags_badges }}<br/>
 <details>
 <summary>{{ large_attributes_summary(large_attrs) }}</summary>
 
@@ -91,6 +91,16 @@ No changes.
 {{ end }}
 
 </details>
+{{ else }}
+{{ large_attributes_summary(large_attrs) }}
+
+{{ for attr in large_attrs }}
+##### **{{ attr.name | escape_markdown }}:**
+
+{{ format_large_value(attr.before, attr.after, large_value_format) }}
+
+{{ end }}
+{{ end }}
 {{ end }}
 
 </details>

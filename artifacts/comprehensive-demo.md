@@ -176,8 +176,8 @@
 | ➕ | `allow-web-secure` | `🔗 TCP` | `🌐 10.1.1.0/24` | `🌐 10.1.3.0/24` | `🔌 443` | `Secure web` |
 | ➕ | `allow-log-ingest` | `🔗 TCP` | `🌐 10.1.4.0/24` | `🌐 10.1.5.0/24` | `🔌 8080` | `Log ingestion` |
 | ➕ | `allow-icmp-ping` | `📡 ICMP` | `🌐 10.1.1.0/24` | `🌐 10.1.4.0/24` | `✳️` | `ICMP ping for network diagnostics` |
-| 🔄 | `allow-dns` | 📨 UDP | <code><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🌐 10.1.1.0/24</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🌐 10.1.1.0/24<span style="background-color: #acf2bd; color: #24292e;">, 🌐 10.1.2.0/24</span></span></code> | 🌐 168.63.129.16 | 🔌 53 | <code>DNS to Azure</code> |
-| 🔄 | `allow-api` | 🔗 TCP | 🌐 10.1.1.0/24 | <code><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🌐 10.<span style="background-color: #ffc0c0; color: #24292e;">1</span>.2.0/24</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🌐 10.<span style="background-color: #acf2bd; color: #24292e;">2</span>.2.0/24</span></code> | <code><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🔌 8443</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🔌 8443<span style="background-color: #acf2bd; color: #24292e;">, 🔌 9443</span></span></code> | <code>API tier</code> |
+| 🔄 | `allow-dns` | 📨 UDP | <code style="display:block; white-space:normal; padding:0; margin:0;"><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🌐 10.1.1.0/24</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🌐 10.1.1.0/24<span style="background-color: #acf2bd; color: #24292e;">, 🌐 10.1.2.0/24</span></span></code> | 🌐 168.63.129.16 | 🔌 53 | <code>DNS to Azure</code> |
+| 🔄 | `allow-api` | 🔗 TCP | 🌐 10.1.1.0/24 | <code style="display:block; white-space:normal; padding:0; margin:0;"><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🌐 10.<span style="background-color: #ffc0c0; color: #24292e;">1</span>.2.0/24</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🌐 10.<span style="background-color: #acf2bd; color: #24292e;">2</span>.2.0/24</span></code> | <code style="display:block; white-space:normal; padding:0; margin:0;"><span style="background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">- 🔌 8443</span><br><span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: inline-block; padding-left: 8px; margin-left: 0;">+ 🔌 8443<span style="background-color: #acf2bd; color: #24292e;">, 🔌 9443</span></span></code> | <code>API tier</code> |
 | ❌ | `allow-web` | `🔗 TCP` | `🌐 10.1.1.0/24` | `🌐 10.1.3.0/24` | `🔌 80` | `Legacy HTTP` |
 | ⏺️ | `allow-monitoring` | `🔗 TCP` | `🌐 10.1.1.0/24` | `🌐 10.1.4.0/24` | `🔌 443` | `Monitoring` |
 
@@ -324,9 +324,7 @@
 <summary>🔄 azurerm_key_vault_secret <b><code>audit_policy</code></b> — <code>audit-policy</code> | 1🔧 value</summary>
 <br>
 
-<br/>
-<details>
-<summary>Large values: value (4 lines, 2 changed)</summary>
+Large values: value (4 lines, 2 changed)
 
 ##### **value:**
 
@@ -335,8 +333,6 @@
 <span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: block; padding-left: 8px; margin-left: 0;">+ line2: log <span style="background-color: #acf2bd; color: #24292e;">critica</span>l activity</span>
 line3: end
 </code></pre>
-
-</details>
 
 </details>
 <!-- tfplan2md:resource-end address=module.security.azurerm_key_vault_secret.audit_policy -->

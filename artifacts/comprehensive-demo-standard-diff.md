@@ -324,9 +324,7 @@
 <summary>🔄 azurerm_key_vault_secret <b><code>audit_policy</code></b> — <code>audit-policy</code> | 1🔧 value</summary>
 <br>
 
-<br/>
-<details>
-<summary>Large values: value (4 lines, 2 changed)</summary>
+Large values: value (4 lines, 2 changed)
 
 ##### **value:**
 
@@ -338,8 +336,6 @@
 + line2: log critical activity
 + line3: end
 ```
-
-</details>
 
 </details>
 <!-- tfplan2md:resource-end address=module.security.azurerm_key_vault_secret.audit_policy -->

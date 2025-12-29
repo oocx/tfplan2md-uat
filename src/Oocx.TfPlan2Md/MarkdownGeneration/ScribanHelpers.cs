@@ -865,6 +865,13 @@ public static class ScribanHelpers
         return string.IsNullOrEmpty(content) ? string.Empty : $"<code>{content}</code>";
     }
 
+    private static string WrapInlineDiffCode(string content)
+    {
+        return string.IsNullOrEmpty(content)
+            ? string.Empty
+            : $"<code style=\"display:block; white-space:normal; padding:0; margin:0;\">{content}</code>";
+    }
+
     private static string CodeFence(string content, string? language = null)
     {
         var fenceLang = string.IsNullOrWhiteSpace(language) ? string.Empty : language;
@@ -1368,7 +1375,7 @@ public static class ScribanHelpers
         return parsedFormat switch
         {
             LargeValueFormat.StandardDiff => BuildStandardDiffTable(EscapeMarkdown(beforeValue), EscapeMarkdown(afterValue)),
-            _ => WrapInlineCode(BuildInlineDiffTable(beforeValue, afterValue))
+            _ => WrapInlineDiffCode(BuildInlineDiffTable(beforeValue, afterValue))
         };
     }
 

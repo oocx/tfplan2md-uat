@@ -283,6 +283,56 @@ Verifies that the new output format passes all markdownlint rules.
 
 ---
 
+### TC-16: LargeAttributeSpacing_WithOtherContent_AddsBreakBeforeDetails
+
+**Type:** Unit (Template)
+
+**Description:**
+Verifies that a `<br/>` is added before the large attributes `<details>` block when the resource has small attributes or tags.
+
+**Expected Result:**
+Markdown contains `<br/>\n<details>\n<summary>Large values` when small attributes or tags exist.
+
+---
+
+### TC-17: LargeAttributeSpacing_WithoutOtherContent_NoExtraBreak
+
+**Type:** Unit (Template)
+
+**Description:**
+Verifies that no extra `<br/>` is added before large attributes when the resource has no small attributes or tags.
+
+**Expected Result:**
+Markdown does not contain `<br/>\n<details>\n<summary>Large values`.
+
+---
+
+### TC-18: LargeAttributesOnly_RendersInlineNotCollapsible
+
+**Type:** Unit (Template)
+
+**Description:**
+Verifies that resources with only large attributes (no small attributes or tags) render large values inline without an inner collapsible section.
+
+**Expected Result:**
+- Markdown contains `Large values:` summary text
+- Markdown does not contain `<details>\n<summary>Large values`
+- Large value content is directly visible under the resource summary
+
+---
+
+### TC-19: InlineDiff_BlockCodeStyling_AlignsInTables
+
+**Type:** Unit (Helper)
+
+**Description:**
+Verifies that inline diff output uses block-level code styling with reset padding/whitespace for proper table alignment in Azure DevOps.
+
+**Expected Result:**
+Inline diff output contains `<code style="display:block; white-space:normal; padding:0; margin:0;">` wrapper.
+
+---
+
 ## Test Data Requirements
 
 - `multi-module-plan.json`: Existing, but ensure it has enough modules for TC-01.

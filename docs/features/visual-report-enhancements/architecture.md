@@ -218,6 +218,28 @@ Location values are formatted as code with the icon inside the code span in summ
 - Requires touching both templates and renderer logic (small but cross-cutting)
 - Regex replacement becomes dependent on marker correctness; templates must always emit matching start/end markers
 
+### Large Attribute Rendering
+
+**Decision:** Large-only resources (resources with only large attributes and no small attributes or tags) render their large attribute content directly inline without a collapsible `<details>` wrapper.
+
+**Rationale:** When a resource has no small attributes table or tags, adding a collapsible section for large values creates unnecessary click friction. Users must always expand the section to see any content. By rendering large-only content inline, we:
+- Reduce visual clutter (no extra "Large values:" summary line)
+- Eliminate unnecessary expand/collapse interaction
+- Maintain consistency with the outer `<details>` that already wraps the entire resource
+
+**Implementation:** The default template conditionally wraps large attributes in `<details>` only when `small_attrs.size > 0 || change.tags_badges` is true. Otherwise, the large values summary and content are rendered directly without the inner wrapper.
+
+### Inline Diff Table Alignment
+
+**Decision:** Inline diffs are wrapped in a block-level `<code>` element with reset padding and whitespace styling: `<code style="display:block; white-space:normal; padding:0; margin:0;">`.
+
+**Rationale:** Azure DevOps markdown tables misalign inline diff rows when default inline code styling is applied. By using block-level code with normalized spacing:
+- Remove/add rows align vertically in table cells
+- Character-level highlighting remains visible
+- Semantic icons are preserved within diff spans
+
+**Implementation:** A dedicated `WrapInlineDiffCode` helper applies the block styling, distinct from the standard `WrapInlineCode` used for non-diff values. The `FormatDiff` function routes inline diff output through this wrapper when inline-diff format is requested.
+
 ## Implementation Notes (for Developer agent)
 
 - Update template replacement in `MarkdownRenderer` to anchor on HTML comments rather than headings.

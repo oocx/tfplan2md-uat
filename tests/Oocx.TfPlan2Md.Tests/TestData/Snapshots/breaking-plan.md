@@ -49,17 +49,13 @@ This has a | pipe and a
 <summary>🔄 azurerm_storage_account <b><code>multiline</code></b> — | 1🔧 tags.note</summary>
 <br>
 
-<br/>
-<details>
-<summary>Large values: tags.note (2 lines, 1 changed)</summary>
+Large values: tags.note (2 lines, 1 changed)
 
 ##### **tags.note:**
 
 <pre style="font-family: monospace; line-height: 1.5;"><code>line1
 <span style="background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: block; padding-left: 8px; margin-left: 0;">+ line2</span>
 </code></pre>
-
-</details>
 
 </details>
 <!-- tfplan2md:resource-end address=azurerm_storage_account.multiline -->
