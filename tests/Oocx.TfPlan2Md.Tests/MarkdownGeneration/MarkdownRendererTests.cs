@@ -1,4 +1,6 @@
 using System;
+using System.Net;
+using System.Text.RegularExpressions;
 using AwesomeAssertions;
 using Oocx.TfPlan2Md.MarkdownGeneration;
 using Oocx.TfPlan2Md.Parsing;
@@ -9,10 +11,37 @@ public class MarkdownRendererTests
 {
     private readonly TerraformPlanParser _parser = new();
     private readonly MarkdownRenderer _renderer = new();
+    private const string Nbsp = "\u00A0";
 
     private static string Escape(string value) => ScribanHelpers.EscapeMarkdown(value);
 
-    private static string Heading(string actionSymbol, string address) => $"#### {actionSymbol} {Escape(address)}";
+    private static string ResourceStart(string address) => $"<!-- tfplan2md:resource-start address={address} -->";
+
+    private static string ResourceEnd(string address) => $"<!-- tfplan2md:resource-end address={address} -->";
+
+    private static string Normalize(string markdown)
+    {
+        ArgumentNullException.ThrowIfNull(markdown);
+        var decoded = WebUtility.HtmlDecode(markdown);
+        var withoutTags = Regex.Replace(decoded, "<.*?>", string.Empty, RegexOptions.Singleline);
+        var withoutBackticks = withoutTags.Replace("`", string.Empty, StringComparison.Ordinal);
+        return Regex.Replace(withoutBackticks, "\\s+", " ", RegexOptions.Singleline).Trim();
+    }
+
+    private static string ResourceSection(string markdown, string address)
+    {
+        var startMarker = ResourceStart(address);
+        var endMarker = ResourceEnd(address);
+
+        var startIndex = markdown.IndexOf(startMarker, StringComparison.Ordinal);
+        startIndex.Should().BeGreaterThanOrEqualTo(0, $"Resource start marker not found for {address}");
+        startIndex += startMarker.Length;
+
+        var endIndex = markdown.IndexOf(endMarker, startIndex, StringComparison.Ordinal);
+        endIndex.Should().BeGreaterThanOrEqualTo(0, $"Resource end marker not found for {address}");
+
+        return markdown[startIndex..endIndex];
+    }
 
     [Fact]
     public void Render_ValidPlan_ContainsSummarySection()
@@ -72,6 +101,23 @@ public class MarkdownRendererTests
     }
 
     [Fact]
+    public void Render_WithReportTitle_UsesCustomTitleInDefaultTemplate()
+    {
+        // Arrange
+        var json = File.ReadAllText("TestData/minimal-plan.json");
+        var plan = _parser.Parse(json);
+        var builder = new ReportModelBuilder(reportTitle: "Custom Title");
+        var model = builder.Build(plan);
+
+        // Act
+        var markdown = _renderer.Render(model);
+
+        // Assert
+        var firstLine = markdown.Split('\n', 2)[0];
+        firstLine.Should().Be("# Custom Title");
+    }
+
+    [Fact]
     public void Render_WithDefaultTemplateName_UsesDefaultBuiltIn()
     {
         // Arrange
@@ -107,6 +153,33 @@ public class MarkdownRendererTests
 
             // Assert
             markdown.Should().Contain("Custom: 1.14.0");
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void Render_WithCustomTemplate_CanAccessReportTitle()
+    {
+        // Arrange
+        var json = File.ReadAllText("TestData/minimal-plan.json");
+        var plan = _parser.Parse(json);
+        var builder = new ReportModelBuilder(reportTitle: "Custom Report Title");
+        var model = builder.Build(plan);
+
+        var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".sbn");
+        File.WriteAllText(tempFile, "# {{ report_title ?? \"Default Title\" }}");
+
+        try
+        {
+            // Act
+            var markdown = _renderer.Render(model, tempFile);
+
+            // Assert
+            var firstLine = markdown.Split('\n', 2)[0];
+            firstLine.Should().Be("# Custom Report Title");
         }
         finally
         {
@@ -186,10 +259,10 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - action symbol lines should exist under module sections
-        markdown.Should().Contain($"➕ {Escape("azurerm_resource_group.main")}")
-            .And.Contain($"🔄 {Escape("azurerm_key_vault.main")}")
-            .And.Contain($"❌ {Escape("azurerm_virtual_network.old")}")
-            .And.Contain($"♻️ {Escape("azuredevops_git_repository.main")}");
+        markdown.Should().Contain("➕ azurerm_resource_group <b><code>main</code></b>")
+            .And.Contain("🔄 azurerm_key_vault <b><code>main</code></b>")
+            .And.Contain("❌ azurerm_virtual_network <b><code>old</code></b>")
+            .And.Contain("♻️ azuredevops_git_repository <b><code>main</code></b>");
     }
 
     [Fact]
@@ -333,10 +406,9 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - ensure resource shows within a module section
-        markdown.Should().Contain(Escape("null_resource.test"))
-            .And.Contain($"➕ {Escape("null_resource.test")}")
-            // Should not contain the Attribute Changes details section since there are no changes
-            .And.NotContain("<details>");
+        markdown.Should().Contain(ResourceStart("null_resource.test"))
+            .And.Contain("➕ null_resource <b><code>test</code></b>")
+            .And.Contain(ResourceEnd("null_resource.test"));
     }
 
     [Fact]
@@ -352,8 +424,8 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert
-        markdown.Should().Contain($"➕ {Escape("azurerm_resource_group.main")}")
-            .And.Contain($"➕ {Escape("azurerm_storage_account.main")}")
+        markdown.Should().Contain("➕ azurerm_resource_group <b><code>main</code></b>")
+            .And.Contain("➕ azurerm_storage_account <b><code>main</code></b>")
             .And.Contain("| ➕ Add | 2 |")
             .And.Contain("Module: root");
     }
@@ -371,12 +443,12 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - For creates we should show a 2-column table (Attribute | Value) and the expected values
-        var rgSection = markdown.Split(Heading("➕", "azurerm_resource_group.main"))[1].Split("###")[0];
+        var rgSection = ResourceSection(markdown, "azurerm_resource_group.main");
         rgSection.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("name")} | `{Escape("rg-new-project")}` |")
-            .And.Contain($"| {Escape("location")} | `{Escape("westeurope")}` |");
+            .And.Contain($"| {Escape("location")} | `{Escape($"🌍{Nbsp}westeurope")}` |");
 
-        var stSection = markdown.Split(Heading("➕", "azurerm_storage_account.main"))[1].Split("###")[0];
+        var stSection = ResourceSection(markdown, "azurerm_storage_account.main");
         stSection.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("account_tier")} | `{Escape("Standard")}` |");
     }
@@ -394,8 +466,8 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert
-        markdown.Should().Contain($"❌ {Escape("azurerm_storage_account.old")}")
-            .And.Contain($"❌ {Escape("azurerm_resource_group.old")}")
+        markdown.Should().Contain("❌ azurerm_storage_account <b><code>old</code></b>")
+            .And.Contain("❌ azurerm_resource_group <b><code>old</code></b>")
             .And.Contain("❌ Destroy | 2");
     }
 
@@ -412,15 +484,16 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - For deletes we should show a 2-column table (Attribute | Value) and the expected values
-        var stSection = markdown.Split(Heading("❌", "azurerm_storage_account.old"))[1].Split("###")[0];
+        var stSection = ResourceSection(markdown, "azurerm_storage_account.old");
         stSection.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("account_tier")} | `{Escape("Standard")}` |")
-            .And.Contain($"| {Escape("name")} | `{Escape("stoldproject")}` |");
+            .And.Contain($"| {Escape("name")} | `{Escape("stoldproject")}` |")
+            .And.Contain($"| {Escape("location")} | `{Escape($"🌍{Nbsp}westeurope")}` |");
 
-        var rgSection = markdown.Split(Heading("❌", "azurerm_resource_group.old"))[1].Split("###")[0];
+        var rgSection = ResourceSection(markdown, "azurerm_resource_group.old");
         rgSection.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("name")} | `{Escape("rg-old-project")}` |")
-            .And.Contain($"| {Escape("location")} | `{Escape("westeurope")}` |");
+            .And.Contain($"| {Escape("location")} | `{Escape($"🌍{Nbsp}westeurope")}` |");
     }
 
     [Fact]
@@ -475,7 +548,7 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - replace should use the Before/After table
-        var section = markdown.Split(Heading("♻️", "example_resource.replace_me"))[1].Split("###")[0];
+        var section = ResourceSection(markdown, "example_resource.replace_me");
         section.Should().Contain("| Attribute | Before | After |")
             .And.Contain($"| {Escape("name")} | `{Escape("old")}` | `{Escape("new")}` |")
             .And.Contain($"| {Escape("size")} | `{Escape("small")}` | `{Escape("large")}` |");
@@ -532,7 +605,7 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - sensitive attribute should be masked in the Value column
-        var section = markdown.Split(Heading("➕", "example_resource.sensitive"))[1].Split("###")[0];
+        var section = ResourceSection(markdown, "example_resource.sensitive");
         section.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("api_key")} | `{Escape("(sensitive)")}` |")
             .And.Contain($"| {Escape("name")} | `{Escape("sensitive_resource")}` |");
@@ -589,9 +662,9 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - the null `name` and unknown `id` should not be shown; only `location` should appear
-        var section = markdown.Split(Heading("➕", "example_resource.partial"))[1].Split("###")[0];
+        var section = ResourceSection(markdown, "example_resource.partial");
         section.Should().Contain("| Attribute | Value |")
-            .And.Contain($"| {Escape("location")} | `{Escape("westeurope")}` |")
+            .And.Contain($"| {Escape("location")} | `{Escape($"🌍{Nbsp}westeurope")}` |")
             .And.NotContain($"`{Escape("name")}`")
             .And.NotContain($"`{Escape("id")}`");
     }
@@ -641,7 +714,7 @@ public class MarkdownRendererTests
         var markdown = _renderer.Render(model);
 
         // Assert - the null `location` should not be shown; only `name` should appear
-        var section = markdown.Split(Heading("❌", "example_resource.partial_delete"))[1].Split("###")[0];
+        var section = ResourceSection(markdown, "example_resource.partial_delete");
         section.Should().Contain("| Attribute | Value |")
             .And.Contain($"| {Escape("name")} | `{Escape("rg-old-project")}` |")
             .And.NotContain($"`{Escape("location")}`");
@@ -708,7 +781,7 @@ public class MarkdownRendererTests
         // (no blank lines between rows)
 
         // Extract the attribute changes table section for azurerm_key_vault.main (which has multiple attributes)
-        var keyVaultSection = markdown.Split(Heading("🔄", "azurerm_key_vault.main"))[1].Split("###")[0];
+        var keyVaultSection = ResourceSection(markdown, "azurerm_key_vault.main");
 
         // FIXED: The table should NOT have the pattern of "|\n\n|" which indicates blank lines between rows
         keyVaultSection.Should().NotContain("|\n\n|");
@@ -823,20 +896,20 @@ public class MarkdownRendererTests
         // Assert - module headers are H3 and resource headings are H4 and resources live under their module
         var moduleHeaders = new[]
         {
-            "### Module: root",
-            "### Module: `module.network`",
-            "### Module: `module.network.module.subnet`",
-            "### Module: `module.app`",
-            "### Module: `module.app.module.database`"
+            "### 📦 Module: root",
+            "### 📦 Module: `module.network`",
+            "### 📦 Module: `module.network.module.subnet`",
+            "### 📦 Module: `module.app`",
+            "### 📦 Module: `module.app.module.database`"
         };
 
-        var resourceHeadings = new[]
+        var resourceStartMarkers = new[]
         {
-            Heading("➕", "azurerm_resource_group.rg_root"),
-            Heading("➕", "module.network.azurerm_virtual_network.vnet"),
-            Heading("➕", "module.network.module.subnet.azurerm_subnet.subnet1"),
-            Heading("🔄", "module.app.azurerm_app_service.app"),
-            Heading("➕", "module.app.module.database.azurerm_postgresql_server.db")
+            ResourceStart("azurerm_resource_group.rg_root"),
+            ResourceStart("module.network.azurerm_virtual_network.vnet"),
+            ResourceStart("module.network.module.subnet.azurerm_subnet.subnet1"),
+            ResourceStart("module.app.azurerm_app_service.app"),
+            ResourceStart("module.app.module.database.azurerm_postgresql_server.db")
         };
 
         for (var i = 0; i < moduleHeaders.Length; i++)
@@ -844,9 +917,9 @@ public class MarkdownRendererTests
             var headerIndex = markdown.IndexOf(moduleHeaders[i], StringComparison.Ordinal);
             headerIndex.Should().BeGreaterThanOrEqualTo(0, $"Module header not found: {moduleHeaders[i]}");
             var nextHeaderIndex = i + 1 < moduleHeaders.Length ? markdown.IndexOf(moduleHeaders[i + 1], StringComparison.Ordinal) : int.MaxValue;
-            var resourceIndex = markdown.IndexOf(resourceHeadings[i], StringComparison.Ordinal);
-            resourceIndex.Should().BeGreaterThan(headerIndex, $"Resource heading {resourceHeadings[i]} should appear after its module header");
-            resourceIndex.Should().BeLessThan(nextHeaderIndex, $"Resource heading {resourceHeadings[i]} should appear before the next module header");
+            var resourceIndex = markdown.IndexOf(resourceStartMarkers[i], StringComparison.Ordinal);
+            resourceIndex.Should().BeGreaterThan(headerIndex, $"Resource {resourceStartMarkers[i]} should appear after its module header");
+            resourceIndex.Should().BeLessThan(nextHeaderIndex, $"Resource {resourceStartMarkers[i]} should appear before the next module header");
         }
     }
 
@@ -868,6 +941,23 @@ public class MarkdownRendererTests
         result.Should().Contain(Escape("web_tier")).And.Contain("Rule Changes");
     }
 
+    [Fact]
+    public void RenderResourceChange_FirewallRuleCollection_SummaryUsesActionIcons()
+    {
+        // Arrange
+        var json = File.ReadAllText("TestData/firewall-rule-changes.json");
+        var plan = _parser.Parse(json);
+        var builder = new ReportModelBuilder();
+        var model = builder.Build(plan);
+        var firewallChange = model.Changes.First(c => c.Address == "azurerm_firewall_network_rule_collection.web_tier");
+
+        // Act
+        var result = _renderer.RenderResourceChange(firewallChange);
+
+        // Assert
+        result.Should().Contain($"**Action:** `{Escape($"✅{Nbsp}Allow")}`");
+    }
+
 
     [Fact]
     public void RenderResourceChange_FirewallRuleCollection_ShowsAddedRules()
@@ -885,6 +975,23 @@ public class MarkdownRendererTests
         // Assert - allow-dns was added
         result.Should().NotBeNull();
         result.Should().Contain("allow-dns").And.Contain("➕");
+    }
+
+    [Fact]
+    public void RenderResourceChange_Nsg_UsesPlusIconForAddedRules()
+    {
+        // Arrange
+        var json = File.ReadAllText("TestData/nsg-rule-changes.json");
+        var plan = _parser.Parse(json);
+        var builder = new ReportModelBuilder();
+        var model = builder.Build(plan);
+        var nsgChange = model.Changes.First(c => c.Address == "azurerm_network_security_group.app");
+
+        // Act
+        var result = _renderer.RenderResourceChange(nsgChange);
+
+        // Assert
+        result.Should().NotContain("➥").And.Contain("| ➕ |");
     }
 
     [Fact]
@@ -956,9 +1063,11 @@ public class MarkdownRendererTests
 
         // Assert - added rule allow-dns is shown in the main rule table with combined Source/Destination
         result.Should().NotBeNull();
-        result.Should().Contain("➕").And.Contain("allow-dns");
-        result.Should().Contain("10.0.1.0/24, 10.0.2.0/24");
-        result.Should().Contain("168.63.129.16");
+        var normalized = Normalize(result);
+        normalized.Should().Contain("➕").And.Contain("allow-dns");
+        // After Normalize, icons and formatting removed but structure retained
+        normalized.Should().Contain("10.0.1.0/24").And.Contain("10.0.2.0/24");
+        normalized.Should().Contain("168.63.129.16");
     }
 
     [Fact]
@@ -976,10 +1085,10 @@ public class MarkdownRendererTests
 
         // Assert - modified rule allow-http is shown in the main rule table with combined Source values
         result.Should().NotBeNull();
-        result.Should().Contain("🔄").And.Contain("allow-http");
-        result.Should().Contain("10.0.3.0/24");
-        result.Should().Contain("from web and API tiers");
-        result.Should().Contain("background-color:");
+        var normalized = Normalize(result);
+        normalized.Should().Contain("🔄").And.Contain("allow-http");
+        normalized.Should().Contain("10.0.3.0/24");
+        normalized.Should().Contain("from web and API tiers");
     }
 
     [Fact]

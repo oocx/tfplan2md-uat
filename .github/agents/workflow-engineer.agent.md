@@ -2,7 +2,7 @@
 description: Analyze, improve, and maintain the agent workflow
 name: Workflow Engineer
 target: vscode
-model: Gemini 3 Pro (Preview)
+model: GPT-5.2
 tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'copilot-container-tools/*', 'github/*', 'io.github.hashicorp/terraform-mcp-server/*', 'mcp-mermaid/*', 'memory/*', 'microsoftdocs/mcp/*', 'agent', 'github.vscode-pull-request-github/copilotCodingAgent', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'todo']
 ---
 
@@ -26,6 +26,7 @@ Evolve and optimize the agent workflow by creating new agents, modifying existin
 - Use conventional commit messages (`feat:`, `refactor:`, `fix:`, `docs:`)
 - Ensure Mermaid diagram reflects all agents and artifacts
 - Test proposed changes incrementally
+- Skip `dotnet test` when changes are limited to agent instructions / skills / documentation (e.g., `.github/agents/`, `.github/skills/`, `.github/copilot-instructions.md`, `docs/`) since the test suite doesn't validate those changes; run `dotnet test` when C# code changes
 
 ### ⚠️ Ask First
 - Before removing an existing agent
@@ -238,7 +239,8 @@ What this agent produces
 
 Agent Skills are reusable capabilities (instructions + scripts) that agents can load on demand. Skills live in `.github/skills/<skill-name>/` and are listed in `docs/agents.md`.
 
-**To create a new skill**, use the `create-agent-skill` skill which provides templates and step-by-step guidance.
+- **To create a new skill**, use the `create-agent-skill` skill which provides templates and step-by-step guidance.
+- **To validate an agent**, use the `validate-agent` skill which uses the validation script and provides manual verification steps for tool existence.
 
 ## Tool Selection Guide
 
@@ -453,7 +455,7 @@ Help with development tasks
 Implement features and tests according to specifications, following C# coding conventions and test-first development.
 
 ## Boundaries
-✅ Always: Write tests before code, run `dotnet test` before committing
+✅ Always: Write tests before code; run `dotnet test` before committing when C# code changes
 ⚠️ Ask First: Database schema changes, adding NuGet packages
 🚫 Never: Edit CHANGELOG.md (auto-generated), commit to main
 ```
@@ -468,7 +470,7 @@ Run tests to verify your changes.
 ```markdown
 ## Commands
 - **Build:** `dotnet build` - Compiles solution, check for errors
-- **Test:** `dotnet test` - Runs all tests, must pass before commit  
+- **Test:** `dotnet test` - Runs all tests; required when C# code changes (not needed for agent/docs-only changes)
 - **Format:** `dotnet format` - Auto-formats code to match .editorconfig
 ```
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using Oocx.TfPlan2Md.MarkdownGeneration.Summaries;
 using Oocx.TfPlan2Md.Parsing;
@@ -13,6 +15,14 @@ public class ReportModel
     public required string TerraformVersion { get; init; }
     public required string FormatVersion { get; init; }
     public string? Timestamp { get; init; }
+    /// <summary>
+    /// Optional custom report title provided via the CLI.
+    /// Related feature: docs/features/custom-report-title/specification.md
+    /// </summary>
+    /// <value>
+    /// The escaped title text used by templates; null when no custom title is provided so templates can apply defaults.
+    /// </value>
+    public string? ReportTitle { get; init; }
     public required IReadOnlyList<ResourceChangeModel> Changes { get; init; }
     public required IReadOnlyList<ModuleChangeGroup> ModuleChanges { get; init; }
     public required SummaryModel Summary { get; init; }
@@ -104,6 +114,24 @@ public class ResourceChangeModel
     /// Related feature: docs/features/replacement-reasons-and-summaries/specification.md
     /// </summary>
     public string? Summary { get; set; }
+
+    /// <summary>
+    /// Precomputed HTML summary line content for rich <summary> rendering (includes action, type, name, and context values with HTML code spans).
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    public string? SummaryHtml { get; set; }
+
+    /// <summary>
+    /// Precomputed changed-attributes summary for update operations (e.g., "2 🔧 attr1, attr2"). Empty for non-update actions.
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    public string? ChangedAttributesSummary { get; set; }
+
+    /// <summary>
+    /// Precomputed tags badge string for create/delete actions (e.g., "**🏷️ Tags:** `env: prod` `owner: ops`"). Null when no tags or on updates.
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    public string? TagsBadges { get; set; }
 }
 
 /// <summary>
@@ -126,13 +154,46 @@ public class AttributeChangeModel
 /// <summary>
 /// Builds a ReportModel from a TerraformPlan.
 /// </summary>
-public class ReportModelBuilder(IResourceSummaryBuilder? summaryBuilder = null, bool showSensitive = false, bool showUnchangedValues = false, LargeValueFormat largeValueFormat = LargeValueFormat.InlineDiff)
+/// <param name="summaryBuilder">Factory for resource summaries; defaults to <see cref="ResourceSummaryBuilder"/>.</param>
+/// <param name="showSensitive">Whether to show sensitive values without masking.</param>
+/// <param name="showUnchangedValues">Whether unchanged attributes should be included in tables.</param>
+/// <param name="largeValueFormat">Rendering format for large values (inline-diff or standard-diff).</param>
+/// <param name="reportTitle">Optional custom report title to propagate to templates.</param>
+/// <remarks>
+/// Related features: docs/features/custom-report-title/specification.md and docs/features/unchanged-values-cli-option/specification.md.
+/// </remarks>
+public class ReportModelBuilder(IResourceSummaryBuilder? summaryBuilder = null, bool showSensitive = false, bool showUnchangedValues = false, LargeValueFormat largeValueFormat = LargeValueFormat.InlineDiff, string? reportTitle = null)
 {
+    /// <summary>
+    /// Indicates whether sensitive values should be rendered without masking.
+    /// </summary>
     private readonly bool _showSensitive = showSensitive;
+
+    /// <summary>
+    /// Indicates whether unchanged attribute values should be included in output tables.
+    /// </summary>
     private readonly bool _showUnchangedValues = showUnchangedValues;
+
+    /// <summary>
+    /// Strategy for building resource summaries used in the report.
+    /// </summary>
     private readonly IResourceSummaryBuilder _summaryBuilder = summaryBuilder ?? new ResourceSummaryBuilder();
+
+    /// <summary>
+    /// Preferred rendering format for large attribute values.
+    /// </summary>
     private readonly LargeValueFormat _largeValueFormat = largeValueFormat;
 
+    /// <summary>
+    /// Optional custom report title provided by the user.
+    /// </summary>
+    private readonly string? _reportTitle = reportTitle;
+
+    /// <summary>
+    /// Builds a fully-populated report model from a parsed Terraform plan.
+    /// </summary>
+    /// <param name="plan">Terraform plan to transform into a report model.</param>
+    /// <returns>A model containing change details, summaries, and optional custom title.</returns>
     public ReportModel Build(TerraformPlan plan)
     {
         // Build all resource change models first (for summary counting)
@@ -194,11 +255,14 @@ public class ReportModelBuilder(IResourceSummaryBuilder? summaryBuilder = null, 
             })
             .ToList();
 
+        var escapedReportTitle = _reportTitle is null ? null : ScribanHelpers.EscapeMarkdownHeading(_reportTitle);
+
         return new ReportModel
         {
             TerraformVersion = plan.TerraformVersion,
             FormatVersion = plan.FormatVersion,
             Timestamp = plan.Timestamp,
+            ReportTitle = escapedReportTitle,
             Changes = displayChanges,
             ModuleChanges = moduleGroups,
             Summary = summary,
@@ -242,8 +306,130 @@ public class ReportModelBuilder(IResourceSummaryBuilder? summaryBuilder = null, 
         };
 
         model.Summary = _summaryBuilder.BuildSummary(model);
+        model.ChangedAttributesSummary = BuildChangedAttributesSummary(model.AttributeChanges, model.Action);
+        model.TagsBadges = BuildTagsBadges(model.AfterJson, model.BeforeJson, model.Action);
+        model.SummaryHtml = BuildSummaryHtml(model);
 
         return model;
+    }
+
+    /// <summary>
+    /// Builds a summary-safe HTML string for use inside <summary> elements, including action icon, type, name, location, address space, and changed attributes.
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    /// <param name="model">Resource change model containing the source data.</param>
+    /// <returns>HTML string safe for use inside a <summary> element.</returns>
+    private static string BuildSummaryHtml(ResourceChangeModel model)
+    {
+        var state = model.AfterJson ?? model.BeforeJson;
+        var flatState = ConvertToFlatDictionary(state);
+
+        flatState.TryGetValue("name", out var nameValue);
+        flatState.TryGetValue("resource_group_name", out var resourceGroup);
+        flatState.TryGetValue("location", out var location);
+        flatState.TryGetValue("address_space[0]", out var addressSpace);
+
+        var prefix = $"{model.ActionSymbol} {model.Type} <b>{ScribanHelpers.FormatCodeSummary(model.Name)}</b>";
+
+        var detailParts = new List<string>();
+
+        var primaryContext = !string.IsNullOrWhiteSpace(nameValue) ? ScribanHelpers.FormatCodeSummary(nameValue!) : null;
+
+        if (!string.IsNullOrWhiteSpace(resourceGroup))
+        {
+            var groupText = $"in {ScribanHelpers.FormatCodeSummary(resourceGroup!)}";
+            primaryContext = primaryContext != null ? $"{primaryContext} {groupText}" : groupText;
+        }
+
+        if (!string.IsNullOrWhiteSpace(location))
+        {
+            var locationText = ScribanHelpers.FormatAttributeValueSummary("location", location!, null);
+            primaryContext = primaryContext != null ? $"{primaryContext} {locationText}" : locationText;
+        }
+
+        if (primaryContext != null)
+        {
+            detailParts.Add(primaryContext);
+        }
+
+        if (!string.IsNullOrWhiteSpace(addressSpace))
+        {
+            detailParts.Add(ScribanHelpers.FormatAttributeValueSummary("address_space[0]", addressSpace!, null));
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.ChangedAttributesSummary))
+        {
+            detailParts.Add($"| {model.ChangedAttributesSummary!}");
+        }
+
+        return detailParts.Count == 0
+            ? prefix
+            : $"{prefix} — {string.Join(" ", detailParts)}";
+    }
+
+    /// <summary>
+    /// Builds a concise changed-attributes summary for update operations (e.g., "2 🔧 attr1, attr2, +N more").
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    /// <param name="attributeChanges">Attribute changes for the resource.</param>
+    /// <param name="action">Terraform action derived from the plan.</param>
+    /// <returns>Formatted summary or empty string when not applicable.</returns>
+    private static string BuildChangedAttributesSummary(IReadOnlyList<AttributeChangeModel> attributeChanges, string action)
+    {
+        if (!string.Equals(action, "update", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Empty;
+        }
+
+        if (attributeChanges.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var names = attributeChanges.Select(a => a.Name).ToList();
+        var displayedNames = names.Take(3).ToList();
+        var remaining = names.Count - displayedNames.Count;
+
+        var nameList = string.Join(", ", displayedNames);
+        if (remaining > 0)
+        {
+            nameList += $", +{remaining} more";
+        }
+
+        return $"{names.Count}🔧 {nameList}";
+    }
+
+    /// <summary>
+    /// Builds inline tag badges for create/delete operations, keeping templates free from tag formatting logic.
+    /// Related feature: docs/features/visual-report-enhancements/specification.md
+    /// </summary>
+    /// <param name="after">After-state JSON for the resource.</param>
+    /// <param name="before">Before-state JSON for the resource.</param>
+    /// <param name="action">Terraform action derived from the plan.</param>
+    /// <returns>Formatted tags badge string or null when no tags or not applicable.</returns>
+    private static string? BuildTagsBadges(object? after, object? before, string action)
+    {
+        if (!string.Equals(action, "create", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(action, "delete", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var state = string.Equals(action, "delete", StringComparison.OrdinalIgnoreCase) ? before : after;
+        var flat = ConvertToFlatDictionary(state);
+
+        var tags = flat.Where(kvp => kvp.Key.StartsWith("tags.", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(kvp => new { Key = kvp.Key[5..], Value = kvp.Value })
+            .ToList();
+
+        if (tags.Count == 0)
+        {
+            return null;
+        }
+
+        var badges = tags.Select(tag => ScribanHelpers.FormatCodeTable($"{tag.Key}: {tag.Value}"));
+        return $"**🏷️ Tags:** {string.Join(' ', badges)}";
     }
 
     private static string DetermineAction(IReadOnlyList<string> actions)

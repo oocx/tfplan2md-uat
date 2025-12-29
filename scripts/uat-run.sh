@@ -2,7 +2,15 @@
 # UAT Wrapper Script (GitHub + Azure DevOps)
 #
 # Purpose: Reduce Maintainer approval fatigue by batching UAT into one stable command.
-#
+
+set -euo pipefail
+
+# Prevent interactive pagers from blocking automation
+export GH_PAGER=cat
+export GH_FORCE_TTY=false
+export AZURE_CORE_PAGER=cat
+export PAGER=cat
+
 # Usage:
 #   scripts/uat-run.sh [artifact-path] <test-description> [--platform both|github|azdo]
 #
@@ -149,15 +157,18 @@ git switch -c "$uat_branch" >/dev/null
 gh_pr=""
 azdo_pr=""
 
+simulate="${UAT_SIMULATE:-false}"
+
 if [[ "$platform" == "both" || "$platform" == "github" ]]; then
   log_info "Creating GitHub UAT PR..."
   gh_out="$(scripts/uat-github.sh create "$artifact_github" "$test_description" | cat)"
   gh_pr="$(echo "$gh_out" | grep -oE 'PR created: #[0-9]+' | grep -oE '[0-9]+' | tail -n 1)"
+  gh_url="$(echo "$gh_out" | grep -oE 'PR created: #[0-9]+ \((.*)\)' | sed -E 's/.*PR created: #[0-9]+ \((.*)\)/\1/' | tail -n 1)"
   if [[ -z "$gh_pr" ]]; then
     log_error "Failed to parse GitHub PR number from output."
     exit 1
   fi
-  log_info "GitHub PR: #$gh_pr"
+  log_info "GitHub PR: #$gh_pr ($gh_url)"
 fi
 
 if [[ "$platform" == "both" || "$platform" == "azdo" ]]; then
@@ -167,16 +178,23 @@ if [[ "$platform" == "both" || "$platform" == "azdo" ]]; then
   log_info "Creating Azure DevOps UAT PR..."
   azdo_out="$(scripts/uat-azdo.sh create "$artifact_azdo" "$test_description" | cat)"
   azdo_pr="$(echo "$azdo_out" | grep -oE 'PR created: #[0-9]+' | grep -oE '[0-9]+' | tail -n 1)"
+  azdo_url="$(echo "$azdo_out" | grep -oE 'PR created: #[0-9]+ \((.*)\)' | sed -E 's/.*PR created: #[0-9]+ \((.*)\)/\1/' | tail -n 1)"
   if [[ -z "$azdo_pr" ]]; then
     log_error "Failed to parse Azure DevOps PR id from output."
     exit 1
   fi
-  log_info "Azure DevOps PR: #$azdo_pr"
+  log_info "Azure DevOps PR: #$azdo_pr ($azdo_url)"
 fi
 
 poll_interval_seconds=15
 timeout_seconds=$((60 * 60))
 start_epoch="$(date +%s)"
+
+if [[ "$simulate" == "true" ]]; then
+  log_warn "SIMULATION MODE enabled (UAT_SIMULATE=true): PRs created with [SIMULATION] prefix."
+  log_warn "The script will now POLL for approval just like a real run."
+  log_warn "Approve the PRs to test the detection logic, or use Ctrl+C to abort."
+fi
 
 while true; do
   now_epoch="$(date +%s)"
@@ -219,8 +237,13 @@ if [[ -n "$azdo_pr" ]]; then
   scripts/uat-azdo.sh cleanup "$azdo_pr"
 fi
 
-log_info "Deleting GitHub remote branch: $uat_branch"
-git push origin --delete "$uat_branch" >/dev/null 2>&1 || log_warn "Failed to delete origin/$uat_branch (may already be deleted)."
+log_info "Deleting remote branch: $uat_branch"
+if git remote get-url uat-github >/dev/null 2>&1; then
+  git push uat-github --delete "$uat_branch" >/dev/null 2>&1 || log_warn "Failed to delete uat-github/$uat_branch (may already be deleted)."
+fi
+if git remote get-url origin >/dev/null 2>&1; then
+  git push origin --delete "$uat_branch" >/dev/null 2>&1 || log_warn "Failed to delete origin/$uat_branch (may already be deleted)."
+fi
 
 log_info "Restoring original branch: $original_branch"
 git switch "$original_branch" >/dev/null

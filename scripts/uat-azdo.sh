@@ -22,7 +22,8 @@
 set -euo pipefail
 
 # Prevent interactive pagers from blocking automation
-export PAGER="${PAGER:-cat}"
+export AZURE_CORE_PAGER=cat
+export PAGER=cat
 
 AZDO_ORG="${AZDO_ORG:-https://dev.azure.com/oocx}"
 AZDO_PROJECT="${AZDO_PROJECT:-test}"
@@ -83,9 +84,16 @@ cmd_create() {
     local branch
     branch=$(git branch --show-current)
     local title="UAT: $(basename "$file" .md)"
+    
+    local simulation_header=""
+    if [[ "$simulate" == "true" ]]; then
+        title="[SIMULATION] $title"
+        simulation_header="> ⚠️ **SIMULATION MODE**\n> This is a test of the UAT process using standard artifacts. Reported issues are likely expected or already known.\n\n"
+    fi
+
     local description
     description=$(cat <<EOF
-## Problem
+${simulation_header}## Problem
 Validate markdown rendering in real PR UIs.
 
 ## Change
@@ -140,9 +148,9 @@ EOF
     local pr_id
     pr_id=$(echo "$pr_result" | jq -r '.pullRequestId')
     local pr_url
-    pr_url=$(echo "$pr_result" | jq -r '.url // empty')
+    pr_url=$(echo "$pr_result" | jq -r '.repository.webUrl + "/pullrequest/" + (.pullRequestId|tostring)')
     
-    log_info "PR created: #$pr_id"
+    log_info "PR created: #$pr_id ($pr_url)"
     
     # Add the markdown content as a comment
     log_info "Adding initial UAT content as comment..."

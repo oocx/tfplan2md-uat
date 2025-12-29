@@ -61,6 +61,23 @@ Long Azure resource IDs from the `azurerm` provider are rendered as readable sco
 | key_vault_id | Key Vault `kv-demo` in resource group `rg-demo` of subscription `00000000-0000-0000-0000-000000000000` |
 ````
 
+## Custom Report Title
+
+**Status:** ✅ Implemented
+
+Users can provide a custom title for generated reports via the `--report-title` CLI option. This allows for better context when sharing reports or distinguishing between different pipeline runs.
+
+- **Contextual Titles**: Add repository names, environment identifiers, or purpose (e.g., "Drift Detection") to the report title.
+- **Automatic Escaping**: Special characters in titles are automatically escaped to ensure valid markdown headings.
+- **Template Support**: The custom title is available to all templates (built-in and custom) via the `report_title` variable.
+- **Fallback**: If no title is provided, templates fall back to their default titles (e.g., "Terraform Plan Report").
+  Templates add the `#` heading marker; `report_title` only contains the escaped text.
+
+Example:
+```bash
+tfplan2md plan.json --report-title "Drift Detection Results"
+```
+
 ## Input
 
 - **Stdin (default)**: Read Terraform plan JSON from standard input
@@ -360,6 +377,7 @@ Simple single-command interface with flags:
 |------|-------------|
 | `--output <file>` | Write output to a file instead of stdout |
 | `--template <name\|file>` | Use a built-in template by name (default, summary) or a custom Scriban template file |
+| `--report-title <text>` | Override the report's level-1 heading |
 | `--large-value-format <format>` | Format for large/multi-line attributes: `inline-diff` (default, HTML with inline diff) or `standard-diff` (markdown diff fence) |
 | `--principal-mapping <file>` | Map Azure principal IDs to names using a JSON file |
 | `--show-unchanged-values` | Include unchanged attribute values in tables (hidden by default) |
@@ -381,9 +399,11 @@ Simple single-command interface with flags:
 
 ## Enhanced Azure Role Assignment Display
 
-The `azurerm_role_assignment` resource uses a table-based format with human-readable summaries instead of cryptic GUIDs and technical paths.
+The `azurerm_role_assignment` resource uses a table-based format with human-readable summaries, semantic icons, and clean resource naming instead of cryptic GUIDs and technical paths.
 
 **Features:**
+- **Semantic icons**: Principal types show `👤 User`, `👥 Group`, or `💻 ServicePrincipal`; roles show `🛡️` shield icon
+- **Local resource names**: Summaries show clean names (e.g., `rg_reader`) instead of full module paths
 - **Comprehensive built-in role mapping**: All 473 Azure built-in role definition GUIDs are automatically mapped to friendly names (e.g., "Reader", "Contributor", "Storage Blob Data Reader")
 - **Hierarchical scope display**: Azure resource scopes are parsed and displayed with clear context:
   - Management Groups: `my-mg (Management Group)`
@@ -403,21 +423,25 @@ The `azurerm_role_assignment` resource uses a table-based format with human-read
 
 **Example output:**
 ```markdown
-#### ➕ azurerm_role_assignment.example
-
-**Summary:** `John Doe` (User) → `Reader` on `my-rg`
-
 <details>
+<summary>➕ azurerm_role_assignment <b><code>rg_reader</code></b> — <code>👤 Jane Doe (User)</code> → <code>🛡️ Reader</code> on <code>rg-demo</code></summary>
+<br>
 
 | Attribute | Value |
-|-----------|-------|
-| `scope` | my-rg in subscription 12345678-1234-1234-1234-123456789012 |
-| `role_definition_id` | Reader (acdd72a7-3385-48ef-bd42-f606fba81ae7) |
-| `principal_id` | John Doe (User) [abcdef01-2345-6789-abcd-ef0123456789] |
-| `principal_type` | User |
+| ----------- | ------- |
+| scope | `rg-demo` in subscription `12345678-1234-1234-1234-123456789012` |
+| role_definition_id | `Reader` (`acdd72a7-3385-48ef-bd42-f606fba81ae7`) |
+| principal_id | `Jane Doe (User)` (User) [`00000000-0000-0000-0000-000000000001`] |
+| principal_type | `👤 User` |
+| role_definition_name | `🛡️ Reader` |
 
 </details>
 ```
+
+Note how the summary shows:
+- Local resource name `rg_reader` instead of full module path
+- Principal with icon: `👤 Jane Doe (User)`
+- Role with icon: `🛡️ Reader`
 
 **Usage:**
 ```bash

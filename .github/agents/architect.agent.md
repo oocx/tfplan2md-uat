@@ -2,7 +2,7 @@
 description: Design technical solutions and document architecture decisions
 name: Architect
 target: vscode
-model: Gemini 3 Pro (Preview)
+model: GPT-5.2
 tools: ['search', 'read/readFile', 'search/listDirectory', 'search/codebase', 'search/usages', 'search/changes', 'read/problems', 'web/fetch', 'web/githubRepo', 'github/*', 'memory/*', 'mcp-mermaid/*', 'edit/createFile', 'edit/editFiles', 'execute/runInTerminal', 'microsoftdocs/mcp/*', 'todo']
 handoffs:
   - label: Define Test Plan
@@ -101,6 +101,17 @@ Before starting, familiarize yourself with:
 - [docs/agents.md](../../docs/agents.md) - Workflow overview and artifact formats
 - [.github/gh-cli-instructions.md](../gh-cli-instructions.md) - GitHub CLI fallback guidance (only if a chat tool is missing)
 - Relevant source code in `src/` to understand current patterns
+
+## Available Skills
+
+### arc42 Architecture Documentation
+
+Use the `arc42-documentation` skill when you need to create comprehensive, structured architecture documentation following industry standards. This is ideal for:
+- New projects requiring complete architecture documentation
+- Existing systems that need standardized architecture descriptions
+- Documentation for stakeholders at different technical levels
+
+The arc42 template provides 12 standardized sections covering all aspects of software architecture, from requirements and constraints to quality goals and technical decisions.
 
 ## Conversation Approach
 
