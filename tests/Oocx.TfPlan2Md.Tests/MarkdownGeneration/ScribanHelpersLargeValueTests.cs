@@ -41,7 +41,7 @@ public class ScribanHelpersLargeValueTests
     [Fact]
     public void FormatLargeValue_Create_ShowsSingleCodeBlock()
     {
-        var result = ScribanHelpers.FormatLargeValue(null, "value", "standard-diff");
+        var result = ScribanHelpers.FormatLargeValue(null, "value", "simple-diff");
 
         result.Should().StartWith("```\n");
         result.Should().Contain("value");
@@ -53,7 +53,7 @@ public class ScribanHelpersLargeValueTests
     [Fact]
     public void FormatLargeValue_Delete_ShowsSingleCodeBlock()
     {
-        var result = ScribanHelpers.FormatLargeValue("value", null, "standard-diff");
+        var result = ScribanHelpers.FormatLargeValue("value", null, "simple-diff");
 
         result.Should().StartWith("```\n");
         result.Should().Contain("value");
@@ -65,7 +65,7 @@ public class ScribanHelpersLargeValueTests
     [Fact]
     public void FormatLargeValue_Update_UsesDiffFence()
     {
-        var result = ScribanHelpers.FormatLargeValue("old", "new", "standard-diff");
+        var result = ScribanHelpers.FormatLargeValue("old", "new", "simple-diff");
 
         result.Should().StartWith("```diff\n");
         result.Should().Contain("- old");
@@ -83,8 +83,8 @@ public class ScribanHelpersLargeValueTests
 
         result.Should().StartWith("<pre style=\"font-family: monospace; line-height: 1.5;\"><code>");
         result.Should().Contain("common\n");
-        result.Should().Contain("background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: block; padding-left: 8px; margin-left: -4px;");
-        result.Should().Contain("background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: block; padding-left: 8px; margin-left: -4px;");
+        result.Should().Contain("background-color: #fff5f5; border-left: 3px solid #d73a49; color: #24292e; display: block; padding-left: 8px; margin-left: 0;");
+        result.Should().Contain("background-color: #f0fff4; border-left: 3px solid #28a745; color: #24292e; display: block; padding-left: 8px; margin-left: 0;");
         result.Should().Contain("background-color: #ffc0c0;");
         result.Should().Contain("background-color: #acf2bd;");
         result.Should().EndWith("</code></pre>");

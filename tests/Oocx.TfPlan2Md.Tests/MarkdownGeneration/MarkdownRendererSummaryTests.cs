@@ -19,7 +19,23 @@ public class MarkdownRendererSummaryTests
         var markdown = renderer.Render(model);
 
         // Assert
-        markdown.Should().Contain("**Summary:**");
-        markdown.Should().Contain("recreate `snet-db` (address_prefixes[0] changed: force replacement)");
+        markdown.Should().Contain("♻️ azurerm_subnet <b><code>db</code></b>");
+    }
+
+    [Fact]
+    public void Render_WithReportTitle_UsesCustomTitleInSummaryTemplate()
+    {
+        // Arrange
+        var json = File.ReadAllText("TestData/minimal-plan.json");
+        var plan = new TerraformPlanParser().Parse(json);
+        var model = new ReportModelBuilder(reportTitle: "Summary Title").Build(plan);
+        var renderer = new MarkdownRenderer();
+
+        // Act
+        var markdown = renderer.Render(model, "summary");
+
+        // Assert
+        var firstNonEmptyLine = markdown.Split('\n').First(line => !string.IsNullOrWhiteSpace(line));
+        firstNonEmptyLine.Should().Be("# Summary Title");
     }
 }

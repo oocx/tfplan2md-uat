@@ -2,10 +2,40 @@
 
 ![tfplan2md](tfplan2md-logo.svg)
 
+[![CI](https://github.com/oocx/tfplan2md/workflows/CI/badge.svg)](https://github.com/oocx/tfplan2md/actions/workflows/ci.yml) [![Release](https://github.com/oocx/tfplan2md/workflows/Release/badge.svg)](https://github.com/oocx/tfplan2md/actions/workflows/release.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Docker Pulls](https://img.shields.io/docker/pulls/oocx/tfplan2md)](https://hub.docker.com/r/oocx/tfplan2md) [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Docker](https://img.shields.io/badge/docker-recommended-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/oocx/tfplan2md) [![Terraform](https://img.shields.io/badge/Terraform-1.0+-844FBA?logo=terraform)](https://www.terraform.io/) [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-100%25-blue?logo=github)](https://github.com/features/copilot) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 Convert Terraform plan JSON files into human-readable Markdown reports.
 
-**NOTE:** I used this tool as an example use case to see how far I can go with implementing as much as possible with AI support. Most of this code and specs were generated with Github CoPilot.
+**NOTE:** This project was developed 100% with GitHub Copilot to explore how far AI-assisted development can go. All code and specifications were generated with AI support.
+
+## Use Cases
+
+### Pull Request Reviews
+
+Terraform plans are notoriously difficult to review in pull requests:
+
+- **Wall of text output** - Raw `terraform plan` output is verbose and hard to scan
+- **No structure** - Changes aren't grouped logically, making it difficult to understand impact
+- **Cryptic JSON** - `terraform show -json` provides complete data but is unreadable for humans
+- **Index-based diffs** - Changes to lists show as confusing index modifications (e.g., `firewall_rule[2]` deleted, `firewall_rule[1]` modified)
+- **Lost context** - Hard to see the big picture: "What's actually changing and why?"
+
+**tfplan2md solves this** by generating clean, readable Markdown reports that:
+
+- ✅ **Structure changes logically** - Group by module, summarize by action type
+- ✅ **Show semantic diffs** - See which firewall rules or NSG rules were added/removed, not index changes
+- ✅ **Highlight key changes** - One-line summaries show what changed in each resource at a glance
+- ✅ **Format for readability** - Collapsible sections, tables, and syntax highlighting make review efficient
+- ✅ **Render natively** - GitHub and Azure DevOps display reports beautifully in PR comments
+
+**Result:** Reviewers can quickly understand infrastructure changes, catch potential issues, and approve confidently.
+
+### Other Use Cases
+
+- **Release documentation** - Attach plan reports to release notes for audit trails
+- **Compliance audits** - Generate human-readable change documentation for compliance reviews
+- **Team communication** - Share infrastructure changes with stakeholders who don't read Terraform code
+- **CI/CD integration** - Automatically post plan summaries to PRs, Slack, or Teams
 
 ## Features
 
@@ -16,6 +46,7 @@ Convert Terraform plan JSON files into human-readable Markdown reports.
 - 🐳 **Docker-ready** - Distributed as a minimal Docker image for CI/CD pipelines
 - 📁 **Module grouping** - Resource changes are grouped by module and rendered as module sections
 - 🆔 **Readable Azure Resource IDs** - Long Azure IDs are automatically formatted as readable scopes with values in code (e.g., Key Vault `kv` in resource group `rg`)
+- 🎨 **Semantic icons** - Visual icons for values: 🌐 for IPs, 🔌 for ports, 📨/🔗 for protocols, ✅/❌ for booleans, 👤/👥/💻 for principals, 🛡️ for roles
 - 📝 **Resource summaries** - Each resource change shows a concise one-line summary for quick scanning
 - 🔄 **Replacement reasons** - Resources being replaced show which attributes forced the replacement
 
@@ -75,10 +106,12 @@ terraform show -json plan.tfplan | docker run -i oocx/tfplan2md --template summa
 |--------|-------------|
 | `--output`, `-o <file>` | Write output to a file instead of stdout |
 | `--template`, `-t <name\|file>` | Use a built-in template by name (default, summary) or a custom Scriban template file |
-| `--large-value-format <format>` | Format for multi-line/long attributes: `inline-diff` (default, styled HTML) or `standard-diff` (cross-platform) |
+| `--report-title <text>` | Override the level-1 heading in the generated report |
+| `--large-value-format <format>` | Format for multi-line/long attributes: `inline-diff` (default, styled HTML) or `simple-diff` (cross-platform) |
 | `--principal-mapping`, `--principals`, `-p <file>` | Map Azure principal IDs to names using a JSON file |
 | `--show-unchanged-values` | Include unchanged attribute values in tables (hidden by default) |
 | `--show-sensitive` | Show sensitive values unmasked |
+| `--hide-metadata` | Suppress tfplan2md version and generation timestamp from report header |
 | `--help`, `-h` | Display help information |
 | `--version`, `-v` | Display version information |
 
@@ -87,11 +120,74 @@ terraform show -json plan.tfplan | docker run -i oocx/tfplan2md --template summa
 Attributes with newlines or over 100 characters are automatically moved to a collapsible `<details>` section below the main attribute table:
 
 - **`inline-diff`** (default): Styled HTML with line-by-line and character-level diff highlighting. Optimized for Azure DevOps (GitHub strips styles but content remains readable).
-- **`standard-diff`**: Traditional diff format with `+`/`-` markers. Fully portable and works on both GitHub and Azure DevOps.
+- **`simple-diff`**: Traditional diff format with `+`/`-` markers. Fully portable and works on both GitHub and Azure DevOps.
 
 Example:
 ```bash
-terraform show -json plan.tfplan | tfplan2md --large-value-format standard-diff
+terraform show -json plan.tfplan | tfplan2md --large-value-format simple-diff
+```
+
+### HTML renderer (development tool)
+
+Render existing tfplan2md reports to HTML with GitHub- or Azure-DevOps-like output using the standalone tool in [tools/Oocx.TfPlan2Md.HtmlRenderer](tools/Oocx.TfPlan2Md.HtmlRenderer):
+
+```bash
+dotnet run --project tools/Oocx.TfPlan2Md.HtmlRenderer -- \
+  --input artifacts/comprehensive-demo.md \
+  --flavor github
+
+dotnet run --project tools/Oocx.TfPlan2Md.HtmlRenderer -- \
+  --input artifacts/comprehensive-demo.md \
+  --flavor azdo \
+  --template tools/Oocx.TfPlan2Md.HtmlRenderer/templates/azdo-wrapper.html \
+  --output artifacts/comprehensive-demo.azdo.html
+```
+
+### Screenshot generator (development tool)
+
+Generate PNG or JPEG screenshots from HTML using Playwright in [tools/Oocx.TfPlan2Md.ScreenshotGenerator](tools/Oocx.TfPlan2Md.ScreenshotGenerator). Install the browser once after build:
+
+```bash
+pwsh tools/Oocx.TfPlan2Md.ScreenshotGenerator/bin/Debug/net10.0/playwright.ps1 install chromium --with-deps
+```
+
+Usage examples (formats: png default, jpeg; WebP deferred):
+
+```bash
+# Default viewport (1920x1080), output derived from input name
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html
+
+# Custom viewport
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html \
+  --output artifacts/screenshot-1280x720.png \
+  --width 1280 \
+  --height 720
+
+# Full-page capture
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html \
+  --output artifacts/full-report.png \
+  --full-page
+
+# JPEG with quality
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html \
+  --output artifacts/screenshot.jpg \
+  --quality 85
+
+# Capture specific resource by Terraform address
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html \
+  --output artifacts/resource.png \
+  --target-terraform-resource-id "azurerm_storage_account.example"
+
+# Capture by selector (Playwright syntax)
+dotnet run --project tools/Oocx.TfPlan2Md.ScreenshotGenerator -- \
+  --input artifacts/comprehensive-demo.github.html \
+  --output artifacts/firewall.png \
+  --target-selector "details:has(summary:has-text('azurerm_firewall'))"
 ```
 
 ## Example Output
@@ -101,7 +197,7 @@ All generated markdown is automatically validated and linted for correct formatt
 ```markdown
 # Terraform Plan Report
 
-**Terraform Version:** 1.14.0
+Generated by tfplan2md 0.30.0 (a1b2c3d) on 2026-01-03 14:23:15 UTC | Terraform 1.14.0
 
 ## Summary
 
@@ -126,7 +222,7 @@ All generated markdown is automatically validated and linted for correct formatt
 | Attribute | Value |
 |-----------|-------|
 | location | `westeurope` |
-| name | `example-rg` |
+| name | 🆔 `example-rg` |
 
 </details>
 
@@ -185,7 +281,7 @@ See [examples/comprehensive-demo/README.md](examples/comprehensive-demo/README.m
 
 ## Custom Templates
 
-Create custom Scriban templates for your own report format:
+Create custom Scriban templates for your own report format. Templates focus on layout and presentation, with all value formatting handled by C# helpers for consistency.
 
 ```bash
 docker run -i -v $(pwd):/data oocx/tfplan2md --template /data/my-template.sbn < plan.json
@@ -195,7 +291,7 @@ Built-in templates:
 - `default` (implicit when not specified): Full report with resource changes
 - `summary`: Compact summary with Terraform version, plan timestamp, and action counts only
 
-See [Scriban documentation](https://github.com/scriban/scriban) for template syntax.
+See [Scriban documentation](https://github.com/scriban/scriban) for template syntax and [docs/features.md](docs/features.md) for available helper functions.
 
 ### Resource-Specific Templates
 
@@ -222,7 +318,7 @@ Example output for a firewall rule update:
 | ⏺️ | allow-https | TCP | 10.0.1.0/24 | * | 443 |
 ```
 
-See [docs/features/resource-specific-templates.md](docs/features/resource-specific-templates.md) for creating custom resource templates.
+See [docs/features/001-resource-specific-templates/specification.md](docs/features/001-resource-specific-templates/specification.md) for creating custom resource templates.
 
 ### Template Variables
 
@@ -314,6 +410,34 @@ Versioning is automated using [Conventional Commits](https://www.conventionalcom
 - `feat:` commits bump the **minor** version
 - `fix:` commits bump the **patch** version
 - `BREAKING CHANGE` or `!` bumps the **major** version
+
+## About the Development Team
+
+### Mathias Raacke - Project Maintainer
+
+<img src="profile.jpg" alt="Mathias Raacke" width="150" align="right" style="border-radius: 50%; margin-left: 20px;" />
+
+Mathias Raacke develops software professionally since 2000 and uses .net and c# since 2003. He currently works at [Diamant Software](https://www.diamant-software.de) as part of the Platform-Team that provides Azure Landingzones for the Diamant Software SaaS solution. The Diamant Software Azure platform is developed with 100% IaC and Terraform. Before he moved to the Platform Team, he has been working as software-architect at Diamant since 2012. In the past, Mathias used to work as independent trainer and consultant for .NET development and software architecture, and he developed the WPF localization addin NLocalize for Visual Studio with his own former company Neovelop GmbH.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-mathiasraacke-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mathiasraacke/) [![GitHub](https://img.shields.io/badge/GitHub-oocx-181717?logo=github&logoColor=white)](https://github.com/oocx) [![YouTube](https://img.shields.io/badge/YouTube-Channel-FF0000?logo=youtube&logoColor=white)](https://www.youtube.com/channel/UCksGVtTPuok5ub267_mgVPA) [![Bluesky](https://img.shields.io/badge/Bluesky-oocx-1185FE?logo=bluesky&logoColor=white)](https://bsky.app/profile/oocx.bsky.social) [![Microsoft Certified](https://img.shields.io/badge/Microsoft-Certified-00A4EF?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/users/mathiasraacke/transcript/drl3qhq482qr91p)
+
+### GitHub Copilot - AI Development Partner
+
+<img src="github-copilot.png" alt="GitHub Copilot" width="150" align="right" style="border-radius: 50%; margin-left: 20px; background: #d0d0d0" />
+
+I'm GitHub Copilot, the AI pair programmer that helped write 100% of this project's code, tests, and documentation. I work as an intelligent coding assistant, providing context-aware suggestions, generating implementations from specifications, and helping maintain code quality throughout the development lifecycle.
+
+For this project, we use a multi-model approach to leverage different AI strengths:
+
+- **Claude Sonnet 4.5** - Primary model for requirements engineering, code review, and technical writing
+- **GPT-5.1 Codex Max** - Specialized for C# code generation, .NET patterns, and development tasks
+- **Claude Opus 4.5** - Reserved for difficult problems and edge cases where other models struggled
+- **GPT-5.2** - General-purpose reasoning, architectural decisions, and complex problem-solving
+- **Gemini 3 Flash** - Fast iteration for task planning, release management, and UAT testing
+
+This hybrid approach combines the best capabilities of each model, selecting the right tool for each type of work while maintaining high code quality and development velocity.
+
+[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-100%25-blue?logo=github)](https://github.com/features/copilot) [![Powered by AI](https://img.shields.io/badge/Powered%20by-Multi--Model%20AI-purple)](docs/ai-model-reference.md)
 
 ## License
 

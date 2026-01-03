@@ -23,6 +23,7 @@ public class CliParserTests
         options.ShowUnchangedValues.Should().BeFalse();
         options.ShowHelp.Should().BeFalse();
         options.ShowVersion.Should().BeFalse();
+        options.HideMetadata.Should().BeFalse();
     }
 
     [Fact]
@@ -91,6 +92,58 @@ public class CliParserTests
     }
 
     [Fact]
+    public void Parse_ReportTitleFlag_SetsReportTitle()
+    {
+        // Arrange
+        var args = new[] { "--report-title", "Custom Title" };
+
+        // Act
+        var options = CliParser.Parse(args);
+
+        // Assert
+        options.ReportTitle.Should().Be("Custom Title");
+    }
+
+    [Fact]
+    public void Parse_ReportTitleEmpty_ThrowsCliParseException()
+    {
+        // Arrange
+        var args = new[] { "--report-title", string.Empty };
+
+        // Act
+        var act = () => CliParser.Parse(args);
+
+        // Assert
+        act.Should().Throw<CliParseException>().Which.Message.Should().Contain("cannot be empty");
+    }
+
+    [Fact]
+    public void Parse_ReportTitleWithNewlines_ThrowsCliParseException()
+    {
+        // Arrange
+        var args = new[] { "--report-title", "Line 1\nLine 2" };
+
+        // Act
+        var act = () => CliParser.Parse(args);
+
+        // Assert
+        act.Should().Throw<CliParseException>().Which.Message.Should().Contain("cannot contain newlines");
+    }
+
+    [Fact]
+    public void Parse_ReportTitleWithoutValue_ThrowsCliParseException()
+    {
+        // Arrange
+        var args = new[] { "--report-title" };
+
+        // Act
+        var act = () => CliParser.Parse(args);
+
+        // Assert
+        act.Should().Throw<CliParseException>().Which.Message.Should().Contain("requires a value");
+    }
+
+    [Fact]
     public void Parse_ShowSensitiveFlag_SetsShowSensitive()
     {
         // Arrange
@@ -114,6 +167,19 @@ public class CliParserTests
 
         // Assert
         options.ShowUnchangedValues.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Parse_HideMetadataFlag_SetsHideMetadata()
+    {
+        // Arrange
+        var args = new[] { "--hide-metadata" };
+
+        // Act
+        var options = CliParser.Parse(args);
+
+        // Assert
+        options.HideMetadata.Should().BeTrue();
     }
 
     [Fact]
@@ -274,13 +340,13 @@ public class CliParserTests
     public void Parse_LargeValueFormatStandardDiff_SetsOption()
     {
         // Arrange
-        var args = new[] { "plan.json", "--large-value-format", "standard-diff" };
+        var args = new[] { "plan.json", "--large-value-format", "simple-diff" };
 
         // Act
         var options = CliParser.Parse(args);
 
         // Assert
-        options.LargeValueFormat.Should().Be(LargeValueFormat.StandardDiff);
+        options.LargeValueFormat.Should().Be(LargeValueFormat.SimpleDiff);
     }
 
     [Fact]

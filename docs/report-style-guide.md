@@ -35,19 +35,81 @@ The primary design principle is to visually distinguish **data values** (what is
 
 ### 2. Resource Summaries
 
-Summaries provide a concise one-line overview of the resource change.
+Resource changes are displayed in collapsible `<details>` sections with rich summary lines for quick scanning.
 
-- **Format**: `**Summary:** <content>`
-- **Resource Identifiers**: Code-formatted (e.g., `name`, `id`).
-- **Contextual Info**: Code-formatted (e.g., `resource_group`, `location`, `tier`).
-- **Separators/Connectors**: Plain text (e.g., `|`, `in`, `on`, `->`).
+#### Summary Format
+
+```html
+<details>
+<summary>{action_icon} {resource_type} <b><code>{resource_name}</code></b> — {context_info}</summary>
+<br>
+{content}
+</details>
+```
+
+#### Components
+
+- **Action Icon**: Visual indicator (➕, 🔄, ♻️, ❌)
+- **Resource Type**: Plain text (e.g., `azurerm_virtual_network`)
+- **Resource Name**: Bold + code-formatted (e.g., `<b><code>hub</code></b>`)
+  - For resources in modules, only the **local name** is shown (e.g., `rg_reader` not `module.security.azurerm_role_assignment.rg_reader`)
+- **Context Info**: Code-formatted values separated by plain text connectors
+  - Resource identifiers (name, ID)
+  - Key attributes (location, CIDR blocks)
+  - Changed attribute summary for updates: `<count> 🔧 <attributes>`
+
+#### HTML Code Tags in Summaries
+
+Azure DevOps does not reliably render markdown backticks inside HTML `<summary>` tags. Therefore:
+- Use HTML `<code>` tags for code formatting in summary lines
+- Use backticks for code formatting in tables (outside `<summary>`)
+
+**Example Summaries:**
+
+**Create:**
+```html
+<summary>➕ azurerm_virtual_network <b><code>hub</code></b> — <code>vnet-hub</code> in <code>rg-demo</code> <code>🌍 eastus</code> | <code>🌐 10.0.0.0/16</code></summary>
+```
+
+**Update:**
+```html
+<summary>🔄 azurerm_storage_account <b><code>data</code></b> — <code>stdata</code> | 2 🔧 account_replication_type, tags.cost_center</summary>
+```
+
+**Delete:**
+```html
+<summary>❌ azurerm_resource_group <b><code>legacy</code></b> — <code>rg-old</code> <code>🌍 westus</code></summary>
+```
+
+**Role Assignment (with icons):**
+```html
+<summary>➕ azurerm_role_assignment <b><code>rg_reader</code></b> — <code>👤 Jane Doe (User)</code> → <code>🛡️ Reader</code> on <code>rg-demo</code></summary>
+```
+
+Note: The resource name shows only `rg_reader` (local name), not the full module path.
+
+### 3. Tags Display
+
+Tags are displayed as inline badges below the main attribute table for create and delete operations.
+
+- **Header**: Bold with 🏷️ icon (icon is **outside** code formatting)
+- **Format**: `**🏷️ Tags:** `key: value` `key: value` `key: value``
+- **Each tag**: Separate code-formatted backticks per key-value pair
+- **Placement**: After the attribute table, before the closing `</details>` tag
 
 **Example:**
 ```markdown
-**Summary:** `sttfplan2mdlogs` in `rg-tfplan2md-demo` (`eastus`) | `Standard LRS`
+| Attribute | Value |
+|-----------|-------|
+| location | `🌍 eastus` |
+| name | `rg-demo` |
+
+**🏷️ Tags:** `environment: production` `owner: devops` `cost_center: 1234`
 ```
 
-### 3. Large Value Headings
+**For Updates**: Tag changes appear in the Before/After attribute table, not as inline badges.
+
+### 4. Large Value Headings
 
 For large values moved to collapsible sections:
 
@@ -68,19 +130,58 @@ For large values moved to collapsible sections:
 
 - **H1 (`#`)**: Report Title (e.g., "Terraform Plan Report").
 - **H2 (`##`)**: Major Sections (e.g., "Summary", "Resource Changes").
-- **H3 (`###`)**: Module Grouping (e.g., "Module: root").
-- **H4 (`####`)**: Resource Changes (e.g., "➕ azurerm_resource_group.main").
-- **H5 (`#####`)**: Attribute Details (e.g., Large value headings).
+- **H3 (`###`)**: Module Grouping (e.g., "📦 Module: root", "📦 Module: `module.network`").
+- **H4 (`####`)**: Not used (resources are in collapsible `<details>` sections).
+- **H5 (`#####`)**: Large Value Attribute Names within collapsible sections.
+
+### Resource Display Structure
+
+Resources are displayed in collapsible `<details>` sections rather than traditional headings:
+
+```html
+<details>
+<summary>{action_icon} {resource_type} <b><code>{name}</code></b> — {context}</summary>
+<br>
+
+{attribute_table}
+
+{optional_tags}
+
+{optional_large_values}
+
+</details>
+```
+
+This structure:
+- Provides collapsible content for cleaner reports
+- Allows quick scanning via summary lines
+- Maintains proper heading hierarchy (H3 for modules, no H4 for resources)
 
 ### Module Grouping
 
 - Changes are grouped by module.
-- The root module is labeled as `root`.
+- Modules are separated by horizontal rules (`---`) for clear visual breaks.
+- The root module is labeled as `root` (plain text).
 - Module paths are code-formatted if they are not "root".
+- Module headers use the 📦 icon before the label.
 
-**Example:**
+**Root Module:**
 ```markdown
-### Module: `module.network`
+### 📦 Module: root
+```
+
+**Named Module:**
+```markdown
+---
+
+### 📦 Module: `module.network`
+```
+
+**Nested Module:**
+```markdown
+---
+
+### 📦 Module: `module.network.module.monitoring`
 ```
 
 ## Tables
@@ -118,29 +219,148 @@ For multi-line strings or long values (>100 chars):
 - **Summary**: `<summary>Large values: <attribute_name> (<stats>)</summary>`
 - **Content**:
     - **Inline Diff**: HTML `<pre>` block with styled `<span>` elements for character-level highlighting.
-    - **Standard Diff**: Code block with `diff` language identifier.
+    - **Simple Diff**: Code block with `diff` language identifier.
 
 ## Icons & Symbols
 
-Use the following standard set of icons to indicate actions:
+### Action Icons
 
-| Action | Icon | Meaning |
-|--------|------|---------|
-| Create | ➕ | Resource is being created |
-| Update | 🔄 | Resource is being modified in-place |
-| Delete | ❌ | Resource is being destroyed |
-| Replace| ♻️ | Resource is being destroyed and recreated |
-| No-Op  | ⏺️ | Resource is unchanged (used in some lists) |
+Use the following standard set of icons to indicate resource change actions:
+
+| Action | Icon | Meaning | Usage |
+|--------|------|---------|-------|
+| Create | ➕ | Resource is being created | Appears before resource address in summaries |
+| Update | 🔄 | Resource is being modified in-place | Appears before resource address in summaries |
+| Delete | ❌ | Resource is being destroyed | Appears before resource address in summaries |
+| Replace| ♻️ | Resource is being destroyed and recreated | Appears before resource address in summaries |
+| No-Op  | ⏺️ | Resource is unchanged | Used in resource-specific rule change tables |
+
+### Semantic Value Icons
+
+Icons are applied to specific value types to enhance visual scanning and comprehension. Icons are placed **inside** code formatting (backticks or HTML `<code>` tags) alongside the value.
+
+#### Network & Infrastructure
+
+| Icon | Value Type | Pattern | Example | When to Use |
+|------|------------|---------|---------|-------------|
+| 🌐 | IP Address / CIDR | `🌐 <address>` | `🌐 10.1.1.0/24` | Any value matching IP address or CIDR format (requires dot notation) |
+| 🌍 | Location / Region | `🌍 <region>` | `🌍 eastus` | Azure regions, geographic locations |
+| 🔌 | Port Number | `🔌 <port>` | `🔌 443` | Network port numbers |
+
+#### Protocols & Directions
+
+| Icon | Value Type | Pattern | Example | When to Use |
+|------|------------|---------|---------|-------------|
+| 🔗 | TCP Protocol | `🔗 TCP` | `🔗 TCP` | TCP protocol values |
+| 📨 | UDP Protocol | `📨 UDP` | `📨 UDP` | UDP protocol values |
+| 📡 | ICMP Protocol | `📡 ICMP` | `📡 ICMP` | ICMP protocol values |
+| ✳️ | Wildcard / Any | `✳️` | `✳️` | Asterisk wildcards (protocol/port "any") - icon only, no text |
+| ⬇️ | Inbound | `⬇️ Inbound` | `⬇️ Inbound` | Inbound network traffic direction |
+| ⬆️ | Outbound | `⬆️ Outbound` | `⬆️ Outbound` | Outbound network traffic direction |
+
+#### Security & Access
+
+| Icon | Value Type | Pattern | Example | When to Use |
+|------|------------|---------|---------|-------------|
+| ✅ | Allow / True | `✅ Allow` or `✅ true` | `✅ Allow` | Security rule "Allow" action or boolean true values |
+| ⛔ | Deny | `⛔ Deny` | `⛔ Deny` | Security rule "Deny" action |
+| ❌ | False | `❌ false` | `❌ false` | Boolean false values |
+
+#### Identity & Roles
+
+| Icon | Value Type | Pattern | Example | When to Use |
+|------|------------|---------|---------|-------------|
+| 👤 | User | `👤 User` | `👤 Jane Doe (User)` | Azure AD user principals |
+| 👥 | Group | `👥 Group` | `👥 DevOps Team (Group)` | Azure AD group principals |
+| 💻 | Service Principal | `💻 ServicePrincipal` | `💻 App (ServicePrincipal)` | Azure AD service principals |
+| 🛡️ | Role | `🛡️ <role_name>` | `🛡️ Reader` | Azure role definitions |
+
+#### Other Markers
+
+| Icon | Purpose | Pattern | Example | When to Use |
+|------|---------|---------|---------|-------------|
+| 🏷️ | Tags | `**🏷️ Tags:**` | `**🏷️ Tags:** `env: prod`` | Tags section header (icon outside code) |
+| 🔧 | Changed Attributes | `<count> 🔧 <attrs>` | `2 🔧 name, location` | Update summaries showing changed attribute count |
+| 📦 | Module | `### 📦 Module:` | `### 📦 Module: network` | Module section headers |
+
+### Icon Placement Rules
+
+**Inside Code Formatting** (data values):
+- Network values: `🌐 10.0.0.0/16`, `🔌 443`, `🌍 eastus`
+- Protocols: `🔗 TCP`, `📨 UDP`, `📡 ICMP`
+- Access/Booleans: `✅ Allow`, `⛔ Deny`, `✅ true`, `❌ false`
+- Directions: `⬇️ Inbound`, `⬆️ Outbound`
+- Principals: `👤 User`, `👥 Group`, `💻 ServicePrincipal`
+- Roles: `🛡️ Reader`
+
+**Outside Code Formatting** (labels):
+- Tags header: `**🏷️ Tags:**`
+- Module headers: `### 📦 Module:`
+
+**Example in table:**
+```markdown
+| Attribute | Value |
+|-----------|-------|
+| protocol | `🔗 TCP` |
+| source_address_prefix | `🌐 10.1.0.0/16` |
+| destination_port_range | `🔌 443` |
+| access | `✅ Allow` |
+| direction | `⬇️ Inbound` |
+```
+
+**Example in summary:**
+```markdown
+<summary>➕ azurerm_network_security_rule <b><code>allow_https</code></b> — <code>AllowHTTPS</code> | <code>✅ Allow</code> | <code>⬇️ Inbound</code> | <code>🔗 TCP</code> | Priority 100</summary>
+```
+
+### Inline Diff Icons
+
+When values with semantic icons appear in inline HTML diffs (changed values), the icons are preserved through custom HTML encoding:
+
+**Example:**
+- Protocol change: `- 📨 UDP` → `+ 🔗 TCP`
+- IP list addition: `- 🌐 10.1.1.0/24` → `+ 🌐 10.1.1.0/24, 🌐 10.1.2.0/24`
+- Port addition: `- 🔌 8443` → `+ 🔌 8443, 🔌 9443`
+
+The custom HTML encoding ensures emoji characters render correctly in both GitHub and Azure DevOps while still escaping HTML special characters.
 
 ## Resource-Specific Templates
 
-Custom templates (e.g., Firewall, NSG) must adhere to these guidelines:
+Custom templates (e.g., Firewall, NSG, Role Assignments) must adhere to these guidelines:
 
-1.  **Headers**: Use code formatting for dynamic values (e.g., `**Collection:** `public-egress``).
-2.  **Rule Tables**: All data cells (names, IPs, ports) must be code-formatted.
-3.  **Diffs**: Use the standard diff representation for modified rules.
+1. **Structure**: Use the same collapsible `<details>` structure with HTML comment anchors:
+   ```html
+   <!-- tfplan2md:resource-start address={address} -->
+   <details>
+   <summary>{summary_content}</summary>
+   <br>
+   {content}
+   </details>
+   <!-- tfplan2md:resource-end address={address} -->
+   ```
 
-**Example (NSG Rule):**
+2. **Headers**: Use code formatting for dynamic values (e.g., `**Collection:** `public-egress``).
+
+3. **Rule Tables**: All data cells (names, IPs, ports, protocols) must be code-formatted with appropriate semantic icons:
+   - IPs: `🌐 10.1.1.0/24`
+   - Ports: `🔌 443`
+   - Protocols: `🔗 TCP`, `📨 UDP`, `📡 ICMP`
+   - Access: `✅ Allow`, `⛔ Deny`
+   - Direction: `⬇️ Inbound`, `⬆️ Outbound`
+
+4. **Diffs**: Use inline HTML diffs with semantic icons preserved via `format_attribute_value_plain` helper.
+
+5. **Local Resource Names**: For resources in modules, display only the local name in summaries (e.g., `rg_reader` not `module.security.azurerm_role_assignment.rg_reader`).
+
+**Example (Firewall Rule with icons):**
 ```markdown
-| ➕ | `allow-https` | `100` | `Inbound` | ...
+| Change | Rule Name | Protocols | Source Addresses | Destination Addresses | Destination Ports | Description |
+| -------- | ----------- | ----------- | ------------------ | ---------------------- | ------------------- | ------------- |
+| ➕ | `allow-web-secure` | `🔗 TCP` | `🌐 10.1.1.0/24` | `🌐 10.1.3.0/24` | `🔌 443` | `Secure web` |
+| 🔄 | `allow-dns` | `📨 UDP` | {inline_diff} | `🌐 168.63.129.16` | `🔌 53` | `DNS to Azure` |
+```
+
+**Example (Role Assignment summary with icons and local name):**
+```html
+<summary>➕ azurerm_role_assignment <b><code>rg_reader</code></b> — <code>👤 Jane Doe (User)</code> → <code>🛡️ Reader</code> on <code>rg-demo</code></summary>
 ```
