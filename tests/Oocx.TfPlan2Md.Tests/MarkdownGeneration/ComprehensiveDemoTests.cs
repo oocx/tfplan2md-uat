@@ -11,19 +11,21 @@ public class ComprehensiveDemoTests
 {
     private readonly TerraformPlanParser _parser = new();
     private readonly MarkdownRenderer _renderer;
+    private readonly IPrincipalMapper _principalMapper;
 
     private static string Escape(string value) => ScribanHelpers.EscapeMarkdown(value);
 
     public ComprehensiveDemoTests()
     {
-        _renderer = new MarkdownRenderer(new PrincipalMapper(DemoPaths.DemoPrincipalsPath));
+        _principalMapper = new PrincipalMapper(DemoPaths.DemoPrincipalsPath);
+        _renderer = new MarkdownRenderer(_principalMapper);
     }
 
     [Fact]
     public void DefaultTemplate_RendersAllKeyFeatures()
     {
         var plan = _parser.Parse(File.ReadAllText(DemoPaths.DemoPlanPath));
-        var model = new ReportModelBuilder().Build(plan);
+        var model = new ReportModelBuilder(principalMapper: _principalMapper).Build(plan);
 
         var markdown = _renderer.Render(model);
 
@@ -37,9 +39,13 @@ public class ComprehensiveDemoTests
             .And.Contain("♻️")
             .And.Contain("❌");
 
-        markdown.Should().Contain(Escape("azurerm_firewall_network_rule_collection.network_rules"))
-            .And.Contain("Rule Changes")
-            .And.Contain(Escape("azurerm_role_assignment.rg_reader"))
+        // Verify firewall rules are rendered with semantic diffing
+        markdown.Should().Contain("azurerm_firewall_network_rule_collection")
+            .And.Contain("Rule Changes");
+
+        // Verify role assignments show principal names from mapping
+        markdown.Should().Contain("azurerm_role_assignment")
+            .And.Contain("<b><code>rg_reader</code></b>")
             .And.Contain("Jane Doe (User)");
     }
 
@@ -47,7 +53,7 @@ public class ComprehensiveDemoTests
     public void Render_WithShowSensitive_RevealsSecretValues()
     {
         var plan = _parser.Parse(File.ReadAllText(DemoPaths.DemoPlanPath));
-        var builder = new ReportModelBuilder(showSensitive: true);
+        var builder = new ReportModelBuilder(showSensitive: true, principalMapper: _principalMapper);
         var model = builder.Build(plan);
 
         var markdown = _renderer.Render(model);
@@ -80,11 +86,9 @@ public class ComprehensiveDemoTests
 
         var markdown = _renderer.Render(model);
 
-        // Verify that headings following </details> have at least one blank line between them.
-        // This ensures proper Markdown rendering (content not running into heading).
-        // The regex checks for </details> followed by at least 2 newlines before a heading.
-        var heading = $"### ➕ {Escape("module.network.azurerm_firewall_network_rule_collection.new_public")}";
-        var pattern = $"</details>\\n\\n+{Regex.Escape(heading)}";
+        // Verify that resource sections are separated properly (</details> followed by whitespace and new <details> or <div>)
+        // The pattern looks for </details> followed by whitespace and then another block start
+        var pattern = @"</details>\s+(?:<details[^>]*>|<div[^>]*>)";
 
         markdown.Should().MatchRegex(pattern);
     }

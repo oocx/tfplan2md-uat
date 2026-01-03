@@ -1,101 +1,59 @@
 {{~## Template for azurerm_network_security_group
      Provides semantic diffing of NSG security rules instead of index-based changes.
+     Access properties via 'change' variable - works for both include and direct render paths.
 ~}}
-### {{ action_symbol }} {{ address | escape_markdown }}
+<details open style="margin-bottom:12px; border:1px solid #f0f0f0; padding:12px;">
+<summary>{{ change.summary_html }}</summary>
+<br>
 
-{{~ if after_json ~}}
-**Network Security Group:** `{{ after_json.name | escape_markdown }}`
-{{~ else if before_json ~}}
-**Network Security Group:** `{{ before_json.name | escape_markdown }}`
+### {{ change.action_symbol }} {{ change.address | escape_markdown }}
+
+{{~ if change.network_security_group && change.network_security_group.name ~}}
+**Network Security Group:** `{{ change.network_security_group.name | escape_markdown }}`
 {{~ end ~}}
 
-{{ func source_addresses(rule) }}
-     {{- # Precedence: plural prefixes, then singular prefix, then wildcard -}}
-     {{- if rule.source_address_prefixes && rule.source_address_prefixes.size > 0 -}}{{ ret rule.source_address_prefixes | array.join ", " }}{{- end -}}
-     {{- if rule.source_address_prefix && rule.source_address_prefix != "" -}}{{ ret rule.source_address_prefix }}{{- end -}}
-     {{ ret "*" }}
-{{ end }}
-
-{{ func destination_addresses(rule) }}
-     {{- # Precedence: plural prefixes, then singular prefix, then wildcard -}}
-     {{- if rule.destination_address_prefixes && rule.destination_address_prefixes.size > 0 -}}{{ ret rule.destination_address_prefixes | array.join ", " }}{{- end -}}
-     {{- if rule.destination_address_prefix && rule.destination_address_prefix != "" -}}{{ ret rule.destination_address_prefix }}{{- end -}}
-     {{ ret "*" }}
-{{ end }}
-
-{{ func source_ports(rule) }}
-     {{- # Precedence: plural ranges, then singular range, then wildcard -}}
-     {{- if rule.source_port_ranges && rule.source_port_ranges.size > 0 -}}{{ ret rule.source_port_ranges | array.join ", " }}{{- end -}}
-     {{- if rule.source_port_range && rule.source_port_range != "" -}}{{ ret rule.source_port_range }}{{- end -}}
-     {{ ret "*" }}
-{{ end }}
-
-{{ func destination_ports(rule) }}
-     {{- # Precedence: plural ranges, then singular range, then wildcard -}}
-     {{- if rule.destination_port_ranges && rule.destination_port_ranges.size > 0 -}}{{ ret rule.destination_port_ranges | array.join ", " }}{{- end -}}
-     {{- if rule.destination_port_range && rule.destination_port_range != "" -}}{{ ret rule.destination_port_range }}{{- end -}}
-     {{ ret "*" }}
-{{ end }}
-
-{{ func description_or_dash(value) }}
-     {{- if value && value != "" -}}{{ ret value }}{{- end -}}
-     {{ ret "-" }}
-{{ end }}
-
-{{ func code(value) }}
-     {{- ret "`" + ("" + value | escape_markdown) + "`" }}
-{{ end }}
-
-{{~ if before_json && after_json && before_json.security_rule && after_json.security_rule ~}}
-{{ diff = diff_array before_json.security_rule after_json.security_rule "name" }}
+{{~ if change.before_json && change.after_json && change.network_security_group && change.network_security_group.rule_changes.size > 0 ~}}
 
 #### Security Rules{{ "\n" }}
 
 | Change | Name | Priority | Direction | Access | Protocol | Source Addresses | Source Ports | Destination Addresses | Destination Ports | Description |
 | -------- | ------ | ---------- | ----------- | -------- | ---------- | ------------------ | ------------ | ---------------------- | ------------------- | ------------- |
-{{ for rule in diff.added | array.sort "priority" }}
-| ➕ | {{ code(rule.name) }} | {{ code(rule.priority) }} | {{ code(rule.direction) }} | {{ code(rule.access) }} | {{ code(rule.protocol) }} | {{ code(source_addresses(rule)) }} | {{ code(source_ports(rule)) }} | {{ code(destination_addresses(rule)) }} | {{ code(destination_ports(rule)) }} | {{ code(description_or_dash(rule.description)) }} |
-{{ end }}
-{{ for item in diff.modified | array.sort "after.priority" }}
-| 🔄 | {{ code(item.after.name) }} | {{ format_diff item.before.priority item.after.priority }} | {{ format_diff (item.before.direction ?? "") (item.after.direction ?? "") }} | {{ format_diff (item.before.access ?? "") (item.after.access ?? "") }} | {{ format_diff (item.before.protocol ?? "") (item.after.protocol ?? "") }} | {{ format_diff (source_addresses(item.before)) (source_addresses(item.after)) }} | {{ format_diff (source_ports(item.before)) (source_ports(item.after)) }} | {{ format_diff (destination_addresses(item.before)) (destination_addresses(item.after)) }} | {{ format_diff (destination_ports(item.before)) (destination_ports(item.after)) }} | {{ format_diff (description_or_dash(item.before.description)) (description_or_dash(item.after.description)) }} |
-{{ end }}
-{{ for rule in diff.removed | array.sort "priority" }}
-| ❌ | {{ code(rule.name) }} | {{ code(rule.priority) }} | {{ code(rule.direction) }} | {{ code(rule.access) }} | {{ code(rule.protocol) }} | {{ code(source_addresses(rule)) }} | {{ code(source_ports(rule)) }} | {{ code(destination_addresses(rule)) }} | {{ code(destination_ports(rule)) }} | {{ code(description_or_dash(rule.description)) }} |
-{{ end }}
-{{ for rule in diff.unchanged | array.sort "priority" }}
-| ⏺️ | {{ code(rule.name) }} | {{ code(rule.priority) }} | {{ code(rule.direction) }} | {{ code(rule.access) }} | {{ code(rule.protocol) }} | {{ code(source_addresses(rule)) }} | {{ code(source_ports(rule)) }} | {{ code(destination_addresses(rule)) }} | {{ code(destination_ports(rule)) }} | {{ code(description_or_dash(rule.description)) }} |
+{{~ for row in change.network_security_group.rule_changes ~}}
+| {{ row.change }} | {{ row.name }} | {{ row.priority }} | {{ row.direction }} | {{ row.access }} | {{ row.protocol }} | {{ row.source_addresses }} | {{ row.source_ports }} | {{ row.destination_addresses }} | {{ row.destination_ports }} | {{ row.description }} |
 {{ end }}
 
 
-{{~ else if action == "create" && after_json && after_json.security_rule ~}}
+{{~ else if change.action == "create" && change.network_security_group && change.network_security_group.after_rules.size > 0 ~}}
 #### Security Rules{{ "\n" }}
 
 | Name | Priority | Direction | Access | Protocol | Source Addresses | Source Ports | Destination Addresses | Destination Ports | Description |
 | ------ | ---------- | ----------- | -------- | ---------- | ------------------ | ------------ | ---------------------- | ------------------- | ------------- |
-{{ for rule in after_json.security_rule | array.sort "priority" }}
-| {{ code(rule.name) }} | {{ code(rule.priority) }} | {{ code(rule.direction) }} | {{ code(rule.access) }} | {{ code(rule.protocol) }} | {{ code(source_addresses(rule)) }} | {{ code(source_ports(rule)) }} | {{ code(destination_addresses(rule)) }} | {{ code(destination_ports(rule)) }} | {{ code(description_or_dash(rule.description)) }} |
-{{ end }}
+{{~ for row in change.network_security_group.after_rules ~}}
+| {{ row.name }} | {{ row.priority }} | {{ row.direction }} | {{ row.access }} | {{ row.protocol }} | {{ row.source_addresses }} | {{ row.source_ports }} | {{ row.destination_addresses }} | {{ row.destination_ports }} | {{ row.description }} |
+{{~ end ~}}
 
-{{~ else if action == "delete" && before_json && before_json.security_rule ~}}
+{{~ else if change.action == "delete" && change.network_security_group && change.network_security_group.before_rules.size > 0 ~}}
 #### Security Rules (being deleted)
 
 | Name | Priority | Direction | Access | Protocol | Source Addresses | Source Ports | Destination Addresses | Destination Ports | Description |
 | ------ | ---------- | ----------- | -------- | ---------- | ------------------ | ------------ | ---------------------- | ------------------- | ------------- |
-{{ for rule in before_json.security_rule | array.sort "priority" }}
-| {{ code(rule.name) }} | {{ code(rule.priority) }} | {{ code(rule.direction) }} | {{ code(rule.access) }} | {{ code(rule.protocol) }} | {{ code(source_addresses(rule)) }} | {{ code(source_ports(rule)) }} | {{ code(destination_addresses(rule)) }} | {{ code(destination_ports(rule)) }} | {{ code(description_or_dash(rule.description)) }} |
-{{ end }}
+{{~ for row in change.network_security_group.before_rules ~}}
+| {{ row.name }} | {{ row.priority }} | {{ row.direction }} | {{ row.access }} | {{ row.protocol }} | {{ row.source_addresses }} | {{ row.source_ports }} | {{ row.destination_addresses }} | {{ row.destination_ports }} | {{ row.description }} |
+{{~ end ~}}
 
 {{~ else ~}}
-{{~ if attribute_changes && attribute_changes.size > 0 ~}}
+{{~ if change.attribute_changes && change.attribute_changes.size > 0 ~}}
 <details>
 <summary>Attribute Changes</summary>
 
 | Attribute | Before | After |
 | ----------- | -------- | ------- |
-{{~ for attr in attribute_changes ~}}
+{{~ for attr in change.attribute_changes ~}}
 | {{ attr.name | escape_markdown }} | {{ (attr.before ?? "(null)") | escape_markdown }} | {{ (attr.after ?? "(null)") | escape_markdown }} |
 {{~ end ~}}
 
 </details>
 {{~ end ~}}
 {{~ end ~}}
+
+</details>

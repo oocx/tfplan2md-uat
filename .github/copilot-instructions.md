@@ -31,6 +31,27 @@ For project-specific instructions, refer to the `docs/spec.md` file in the repos
 - Create feature branches for all changes that follow the convention described in the documentation
 - After implementing changes, ensure that the documentation is updated accordingly
 
+## When Waiting For Input (Avoid Silent Stops)
+
+When you cannot proceed because you need Maintainer input (for example, ambiguous requirements, a missing decision, or a required approval), you must:
+
+- State that you are **blocked** and why (1 sentence)
+- Summarize what you completed so far (2–5 bullets)
+- State what work remains (1–3 bullets)
+- Provide **Next** options (1–3 options) so the Maintainer knows how to unblock you
+- Ask **at most one** clarifying question at a time
+
+## Agent Skills (Required)
+
+- Agent Skills are the source of truth for how to perform recurring workflow tasks correctly.
+- Skills live under `.github/skills/<skill-name>/SKILL.md`.
+- Before performing any non-trivial workflow task (for example: PR creation/merge, rebase, resolving merge conflicts, UAT, release steps, demo artifact generation, architecture documentation updates), you must:
+  1. Search for a relevant skill under `.github/skills/`.
+  2. If a relevant skill exists, follow it instead of improvising.
+  3. If you are unsure which skill applies or the intent is unclear, ask the user questions until it is clear.
+
+Note: `docs/agents.md` is a helpful index, but `.github/skills/` is the authoritative list of skills.
+
 ## Plan Mode Instructions
 - Continue to ask for more details until you have a clear understanding of the requirements
 - Only ask one question at a time
@@ -66,9 +87,34 @@ For project-specific instructions, refer to the `docs/spec.md` file in the repos
 - **Do NOT ask for permission in chat**: Immediately follow your explanation with the tool call in the same response. The user will use the VS Code UI buttons to Allow or Deny the command.
   - Bad: "I will run `git status`. Is that okay?" (waits for user reply)
   - Bad: "I will run `git status`." (waits for user reply)
-  - Good: "I will run `git status` to check changes." [Tool Call]
+  - Good: "I will run `scripts/git-status.sh` to check changes." [Tool Call]
+- **Git status wrapper**: Prefer `scripts/git-status.sh` over raw `git status` to reduce terminal approval friction. Pass any `git status` flags as script args (e.g., `scripts/git-status.sh --porcelain=v1`).
+- **Git log wrapper**: Prefer `scripts/git-log.sh` over raw `git log` to reduce terminal approval friction and avoid pager issues. Pass any `git log` flags/ranges as script args (e.g., `scripts/git-log.sh --oneline -20 origin/main..HEAD`).
+- **Git diff wrapper**: Prefer `scripts/git-diff.sh` over raw `git diff` to reduce terminal approval friction and avoid pager issues. Pass any `git diff` flags/paths as script args (e.g., `scripts/git-diff.sh --stat origin/main...HEAD`).
+- **Pager Suppression**: Always prevent interactive pagers from blocking execution.
+  - For `gh`: Use `GH_PAGER=cat GH_FORCE_TTY=false gh ...` or `export GH_PAGER=cat GH_FORCE_TTY=false`.
+  - For `az`: Use `AZURE_CORE_PAGER=cat az ...` or `export AZURE_CORE_PAGER=cat`.
+  - For general tools: Use `export PAGER=cat`.
+- **Test hangs**: When running the full test suite, use the timeout wrapper instead of calling `dotnet test` directly.
+  - Example: `scripts/test-with-timeout.sh -- dotnet test --no-build --configuration Release --verbosity normal`
+  - If you need a different timeout: `scripts/test-with-timeout.sh --timeout-seconds <seconds> -- dotnet test ...`
+- **Snapshot updates**: Snapshot diffs (files under `tests/Oocx.TfPlan2Md.Tests/TestData/Snapshots/`) must be intentional.
+  - Include the token `SNAPSHOT_UPDATE_OK` in at least one commit message in the PR and explain why the snapshot changes are correct.
+  - To regenerate snapshots intentionally, use `scripts/update-test-snapshots.sh`.
+- **Option selection**: If you present the user with an option list and the user replies with a number (e.g., `1`), that number always refers to the **most recent** option list you presented.
+  - Never apply a numeric answer to an older option list.
+  - If there is any ambiguity (e.g., multiple option lists were presented, the numbering changed, or the user response doesn’t map cleanly), ask for confirmation instead of guessing.
+- **Directly-invokable scripts**: Always run repository scripts directly (e.g., `scripts/uat-run.sh`, `scripts/pr-github.sh`, `scripts/validate-agents.py`) instead of via an interpreter/runner (e.g., `bash scripts/<script>.sh`, `python3 scripts/<script>.py`, `dotnet <runner> scripts/<script>`).
+  - This enables per-script permanent allow rules in VS Code approvals.
+  - If a script is not directly invokable, fix it instead of working around it (add a proper shebang and make it executable).
+  - Exception: interpreter tracing is allowed only for debugging (e.g., `bash -x ...`).
+- **Workspace-local temp files**: Do not create or reference temporary files outside the repository (for example `/tmp` or `~/`). If a scratch file is needed, write it under `.tmp/` (create it with `scripts/setup-tmp.sh` if needed).
 - Avoid running commands that are not necessary for the current task.
 - When a command fails, explain the error and propose a solution before retrying.
 
 ## Tooling specific instructions
 - For instructions on how to use the GitHub CLI (`gh`) in automated agents, refer to the `.github/gh-cli-instructions.md` file in the repository
+- **Always use project scripts** instead of raw commands when available:
+  - PR creation/merge: Use `scripts/pr-github.sh` instead of `gh pr create` or `gh pr merge`
+  - UAT execution: Use `scripts/uat-run.sh` instead of manual commands
+  - The scripts handle repository-specific policies and conventions

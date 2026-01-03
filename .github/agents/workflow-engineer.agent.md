@@ -2,8 +2,8 @@
 description: Analyze, improve, and maintain the agent workflow
 name: Workflow Engineer
 target: vscode
-model: Gemini 3 Pro (Preview)
-tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'copilot-container-tools/*', 'github/*', 'io.github.hashicorp/terraform-mcp-server/*', 'mcp-mermaid/*', 'memory/*', 'microsoftdocs/mcp/*', 'agent', 'github.vscode-pull-request-github/copilotCodingAgent', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'ms-toolsai.jupyter/configureNotebook', 'ms-toolsai.jupyter/listNotebookPackages', 'ms-toolsai.jupyter/installNotebookPackages', 'todo']
+model: GPT-5.2
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'copilot-container-tools/*', 'github/*', 'io.github.hashicorp/terraform-mcp-server/*', 'mcp-mermaid/*', 'memory/*', 'microsoftdocs/mcp/*', 'agent', 'github.vscode-pull-request-github/copilotCodingAgent', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/suggest-fix', 'github.vscode-pull-request-github/searchSyntax', 'github.vscode-pull-request-github/doSearch', 'github.vscode-pull-request-github/renderIssues', 'github.vscode-pull-request-github/activePullRequest', 'github.vscode-pull-request-github/openPullRequest', 'todo']
 ---
 
 # Workflow Engineer Agent
@@ -26,6 +26,8 @@ Evolve and optimize the agent workflow by creating new agents, modifying existin
 - Use conventional commit messages (`feat:`, `refactor:`, `fix:`, `docs:`)
 - Ensure Mermaid diagram reflects all agents and artifacts
 - Test proposed changes incrementally
+- Skip `dotnet test` when changes are limited to agent instructions / skills / documentation (e.g., `.github/agents/`, `.github/skills/`, `.github/copilot-instructions.md`, `docs/`) since the test suite doesn't validate those changes; run tests via `scripts/test-with-timeout.sh -- dotnet test` when C# code changes
+- **Commit Amending:** If you need to fix issues or apply feedback for the commit you just created, use `git commit --amend` instead of creating a new "fix" commit.
 
 ### ⚠️ Ask First
 - Before removing an existing agent
@@ -40,6 +42,7 @@ Evolve and optimize the agent workflow by creating new agents, modifying existin
 - Skip documentation updates
 - Change agent core responsibilities without approval
 - Add handoffs to non-existent agents
+- Create "fixup" or "fix" commits for work you just committed; use `git commit --amend` instead.
 
 ## Response Style
 
@@ -238,7 +241,8 @@ What this agent produces
 
 Agent Skills are reusable capabilities (instructions + scripts) that agents can load on demand. Skills live in `.github/skills/<skill-name>/` and are listed in `docs/agents.md`.
 
-**To create a new skill**, use the `create-agent-skill` skill which provides templates and step-by-step guidance.
+- **To create a new skill**, use the `create-agent-skill` skill which provides templates and step-by-step guidance.
+- **To validate an agent**, use the `validate-agent` skill which uses the validation script and provides manual verification steps for tool existence.
 
 ## Tool Selection Guide
 
@@ -260,7 +264,43 @@ Ask clarifying questions one at a time if the goal is unclear:
 - What's the expected outcome?
 - Are there performance or cost considerations?
 
-### 2. Research and Analyze
+### 2. Create a prioritized workflow improvements task list
+
+Before implementing any workflow changes:
+1. Use the latest `retrospective.md` as the primary input.
+2. Collect any open items from previously started workflow improvements.
+3. Create/update the current work item `tasks.md` file under `docs/workflow/NNN-<topic-slug>/tasks.md` (on the current workflow branch).
+
+The task list must be a table and must include a **Status** column with icon + text (for example: `⬜ Not started`, `🟡 In progress`, `✅ Done`, `⛔ Blocked`).
+
+Use this template in `tasks.md`:
+
+```markdown
+## Candidate workflow improvements
+
+| ID | Title | Source | Status | Rationale | Impact | Effort | Risk | Notes |
+|---:|---|---|---|---|---|---|---|---|
+| 1 | <short> | retrospective / prior-work | ⬜ Not started | <why this matters> | High/Med/Low | High/Med/Low | High/Med/Low | <optional> |
+
+## Recommendations
+
+- **Option 1 (Best balance of effort/impact):** **<ID>** — <one sentence why>
+- **Option 2 (Quick win):** **<ID>** — Highest-impact item among Low Effort candidates.
+- **Option 3 (Highest impact):** **<ID>** — Lowest-effort item among High Impact candidates.
+
+## Decision
+Which item should I implement first? (Reply with the Option number, or reply with "work on task <task id>")
+```
+
+After writing `tasks.md` and presenting the options, wait for the Maintainer's selection before changing any files.
+
+**Important:** When asking the Maintainer to choose an ID, always include the three recommended options (Option 1/2/3) in the chat message immediately before the question, even though they are also written to `tasks.md`.
+
+When implementing an improvement:
+- Update the **Status** column in `tasks.md` whenever task state changes.
+- Ensure the selected task is marked `✅ Done` **in the same PR** that completes the task.
+
+### 3. Research and Analyze
 Review current state and gather best practices:
 - Read all affected agent files in `.github/agents/`
 - Check workflow documentation in `docs/agents.md`
@@ -453,7 +493,7 @@ Help with development tasks
 Implement features and tests according to specifications, following C# coding conventions and test-first development.
 
 ## Boundaries
-✅ Always: Write tests before code, run `dotnet test` before committing
+✅ Always: Write tests before code; run `scripts/test-with-timeout.sh -- dotnet test` before committing when C# code changes
 ⚠️ Ask First: Database schema changes, adding NuGet packages
 🚫 Never: Edit CHANGELOG.md (auto-generated), commit to main
 ```
@@ -468,7 +508,8 @@ Run tests to verify your changes.
 ```markdown
 ## Commands
 - **Build:** `dotnet build` - Compiles solution, check for errors
-- **Test:** `dotnet test` - Runs all tests, must pass before commit  
+- **Test:** `scripts/test-with-timeout.sh -- dotnet test` - Runs all tests; required when C# code changes (not needed for agent/docs-only changes)
+   - Override timeout if needed: `scripts/test-with-timeout.sh --timeout-seconds <seconds> -- dotnet test`
 - **Format:** `dotnet format` - Auto-formats code to match .editorconfig
 ```
 

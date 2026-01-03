@@ -38,8 +38,9 @@ public class MarkdownSnapshotTests
     public void Snapshot_ComprehensiveDemo_MatchesBaseline()
     {
         var plan = _parser.Parse(File.ReadAllText(DemoPaths.DemoPlanPath));
-        var model = new ReportModelBuilder().Build(plan);
-        var renderer = new MarkdownRenderer(new PrincipalMapper(DemoPaths.DemoPrincipalsPath));
+        var principalMapper = new PrincipalMapper(DemoPaths.DemoPrincipalsPath);
+        var model = new ReportModelBuilder(principalMapper: principalMapper, metadataProvider: TestMetadataProvider.Instance).Build(plan);
+        var renderer = new MarkdownRenderer(principalMapper);
 
         var markdown = renderer.Render(model);
 
@@ -53,7 +54,7 @@ public class MarkdownSnapshotTests
     public void Snapshot_SummaryTemplate_MatchesBaseline()
     {
         var plan = _parser.Parse(File.ReadAllText(DemoPaths.DemoPlanPath));
-        var model = new ReportModelBuilder().Build(plan);
+        var model = new ReportModelBuilder(metadataProvider: TestMetadataProvider.Instance).Build(plan);
         var renderer = new MarkdownRenderer();
 
         var markdown = renderer.Render(model, "summary");
@@ -70,7 +71,7 @@ public class MarkdownSnapshotTests
     {
         var json = File.ReadAllText("TestData/markdown-breaking-plan.json");
         var plan = _parser.Parse(json);
-        var model = new ReportModelBuilder().Build(plan);
+        var model = new ReportModelBuilder(metadataProvider: TestMetadataProvider.Instance).Build(plan);
         var renderer = new MarkdownRenderer();
 
         var markdown = renderer.Render(model);
@@ -86,8 +87,9 @@ public class MarkdownSnapshotTests
     {
         var json = File.ReadAllText("TestData/role-assignments.json");
         var plan = _parser.Parse(json);
-        var model = new ReportModelBuilder().Build(plan);
-        var renderer = new MarkdownRenderer(new PrincipalMapper(DemoPaths.DemoPrincipalsPath));
+        var principalMapper = new PrincipalMapper(DemoPaths.DemoPrincipalsPath);
+        var model = new ReportModelBuilder(principalMapper: principalMapper, metadataProvider: TestMetadataProvider.Instance).Build(plan);
+        var renderer = new MarkdownRenderer(principalMapper);
 
         var markdown = renderer.Render(model);
 
@@ -102,7 +104,7 @@ public class MarkdownSnapshotTests
     {
         var json = File.ReadAllText("TestData/firewall-rule-changes.json");
         var plan = _parser.Parse(json);
-        var model = new ReportModelBuilder().Build(plan);
+        var model = new ReportModelBuilder(metadataProvider: TestMetadataProvider.Instance).Build(plan);
         var renderer = new MarkdownRenderer();
 
         var markdown = renderer.Render(model);
@@ -118,7 +120,7 @@ public class MarkdownSnapshotTests
     {
         var json = File.ReadAllText("TestData/multi-module-plan.json");
         var plan = _parser.Parse(json);
-        var model = new ReportModelBuilder().Build(plan);
+        var model = new ReportModelBuilder(metadataProvider: TestMetadataProvider.Instance).Build(plan);
         var renderer = new MarkdownRenderer();
 
         var markdown = renderer.Render(model);

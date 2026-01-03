@@ -8,53 +8,53 @@ public class ScribanHelpersFormatDiffTests
     [Fact]
     public void FormatDiff_EqualStrings_ReturnsCodeFormattedValue()
     {
-        ScribanHelpers.FormatDiff("TCP", "TCP", "standard-diff").Should().Be("<code>TCP</code>");
-        ScribanHelpers.FormatDiff("10.0.1.0/24", "10.0.1.0/24", "standard-diff")
+        ScribanHelpers.FormatDiff("TCP", "TCP", "simple-diff").Should().Be("<code>TCP</code>");
+        ScribanHelpers.FormatDiff("10.0.1.0/24", "10.0.1.0/24", "simple-diff")
             .Should().Be("<code>10.0.1.0/24</code>");
     }
 
     [Fact]
-    public void FormatDiff_DifferentStrings_ReturnsBacktickWrappedStandardDiff()
+    public void FormatDiff_DifferentStrings_ReturnsBacktickWrappedSimpleDiff()
     {
-        ScribanHelpers.FormatDiff("TCP", "UDP", "standard-diff")
+        ScribanHelpers.FormatDiff("TCP", "UDP", "simple-diff")
             .Should().Be("- `TCP`<br>+ `UDP`");
 
-        ScribanHelpers.FormatDiff("10.0.1.0/24", "10.0.1.0/24, 10.0.3.0/24", "standard-diff")
+        ScribanHelpers.FormatDiff("10.0.1.0/24", "10.0.1.0/24, 10.0.3.0/24", "simple-diff")
             .Should().Be("- `10.0.1.0/24`<br>+ `10.0.1.0/24, 10.0.3.0/24`");
     }
 
     [Fact]
-    public void FormatDiff_NullBefore_ReturnsBacktickWrappedStandardDiff()
+    public void FormatDiff_NullBefore_ReturnsBacktickWrappedSimpleDiff()
     {
-        ScribanHelpers.FormatDiff(null, "value", "standard-diff")
+        ScribanHelpers.FormatDiff(null, "value", "simple-diff")
             .Should().Be("- ``<br>+ `value`");
     }
 
     [Fact]
-    public void FormatDiff_NullAfter_ReturnsBacktickWrappedStandardDiff()
+    public void FormatDiff_NullAfter_ReturnsBacktickWrappedSimpleDiff()
     {
-        ScribanHelpers.FormatDiff("value", null, "standard-diff")
+        ScribanHelpers.FormatDiff("value", null, "simple-diff")
             .Should().Be("- `value`<br>+ ``");
     }
 
     [Fact]
     public void FormatDiff_BothNull_ReturnsEmptyString()
     {
-        ScribanHelpers.FormatDiff(null, null, "standard-diff").Should().Be(string.Empty);
+        ScribanHelpers.FormatDiff(null, null, "simple-diff").Should().Be(string.Empty);
     }
 
     [Fact]
     public void FormatDiff_EmptyStrings_HandledCorrectly()
     {
-        ScribanHelpers.FormatDiff(string.Empty, string.Empty, "standard-diff").Should().Be(string.Empty);
-        ScribanHelpers.FormatDiff("", "value", "standard-diff").Should().Be("- ``<br>+ `value`");
-        ScribanHelpers.FormatDiff("value", "", "standard-diff").Should().Be("- `value`<br>+ ``");
+        ScribanHelpers.FormatDiff(string.Empty, string.Empty, "simple-diff").Should().Be(string.Empty);
+        ScribanHelpers.FormatDiff("", "value", "simple-diff").Should().Be("- ``<br>+ `value`");
+        ScribanHelpers.FormatDiff("value", "", "simple-diff").Should().Be("- `value`<br>+ ``");
     }
 
     [Fact]
     public void FormatDiff_EscapesValuesAndPreservesLineBreakTags()
     {
-        ScribanHelpers.FormatDiff("<before>", "<after>", "standard-diff")
+        ScribanHelpers.FormatDiff("<before>", "<after>", "simple-diff")
             .Should().Be("- `\\<before\\>`<br>+ `\\<after\\>`");
     }
 
@@ -77,5 +77,23 @@ public class ScribanHelpersFormatDiffTests
         result.Should().Contain("- ")
             .And.Contain("+ ")
             .And.Contain("<span", "still styled for inline rendering");
+    }
+
+    [Fact]
+    public void FormatDiff_InlineDiff_DoesNotUseNegativeMargins()
+    {
+        var result = ScribanHelpers.FormatDiff("🌐 10.1.2.0/24", "🌐 10.2.2.0/24", "inline-diff");
+
+        result.Should().NotContain("margin-left: -4px", "negative margins misalign inline diffs in AzDO tables");
+    }
+
+    [Fact]
+    public void FormatDiff_InlineDiff_UsesBlockCodeForAlignment()
+    {
+        var result = ScribanHelpers.FormatDiff("old", "new", "inline-diff");
+
+        result.Should().Contain("display:block", "block-level code keeps inline diffs aligned inside tables")
+            .And.Contain("white-space:normal", "inline diffs should not preserve extraneous whitespace in table cells")
+            .And.Contain("padding:0", "reset code padding to avoid column drift");
     }
 }

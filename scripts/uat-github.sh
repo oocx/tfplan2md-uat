@@ -19,7 +19,9 @@
 set -euo pipefail
 
 # Prevent interactive pagers from blocking automation
-export PAGER="${PAGER:-cat}"
+export GH_PAGER=cat
+export GH_FORCE_TTY=false
+export PAGER=cat
 
 # UAT repository configuration
 UAT_GITHUB_REPO="${UAT_GITHUB_REPO:-oocx/tfplan2md-uat}"
@@ -60,9 +62,16 @@ cmd_create() {
     local branch
     branch=$(git branch --show-current)
     local title="UAT: $(basename "$file" .md)"
+    
+    local simulation_header=""
+    if [[ "$simulate" == "true" ]]; then
+        title="[SIMULATION] $title"
+        simulation_header="> ⚠️ **SIMULATION MODE**\n> This is a test of the UAT process using standard artifacts. Reported issues are likely expected or already known.\n\n"
+    fi
+
     local body
     body=$(cat <<EOF
-## Problem
+${simulation_header}## Problem
 Validate markdown rendering in real PR UIs.
 
 ## Change
@@ -116,7 +125,7 @@ EOF
     local pr_number
     pr_number=$(echo "$pr_url" | grep -oE '[0-9]+$')
     
-    log_info "PR created: #$pr_number"
+    log_info "PR created: #$pr_number ($pr_url)"
     
     # Add the markdown content as a comment
     log_info "Adding initial UAT content as comment..."

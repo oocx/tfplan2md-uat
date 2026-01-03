@@ -11,6 +11,8 @@ The goal of this tool is to help DevOps and infrastructure teams easily review T
 - Organize files by feature (e.g., `Parsing`, `MarkdownGeneration`, `CLI`), not by type (e.g., `Models`, `Services`)
 - Place all documentation in the /docs folder, except for the README.md at the root
 - Key architecture decisions must be documented in separate files per decision. Place those files in /docs/adr-nnn-title.
+- Documentation subfolders under `/docs/features`, `/docs/issues`, and `/docs/workflow` use a global numeric prefix: `NNN-<topic-slug>`.
+  - **Parallel work rule:** If two branches chose the same next `NNN`, the first PR to merge keeps it; later PRs must renumber before merge.
 - The testing strategy is described in /docs/testing-strategy.md
 - Features of tfplan2md (from a user perspective) are described in /docs/features.md
 - Contribution guidelines are in /CONTRIBUTING.md
@@ -60,7 +62,7 @@ The goal of this tool is to help DevOps and infrastructure teams easily review T
 - Use [Semantic Versioning](https://semver.org/) (SemVer)
 - Automate versioning with [Versionize](https://github.com/versionize/versionize) based on [Conventional Commits](https://www.conventionalcommits.org/)
 - Version tags use `v` prefix (e.g., `v1.0.0`)
-- Docker images are tagged with full version, minor version, major version, and `latest`
+- Docker images are tagged with full version. Stable releases also include minor version, major version, and `latest` tags.
 
 ### Commit Message Format
 - Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
@@ -74,7 +76,7 @@ The goal of this tool is to help DevOps and infrastructure teams easily review T
 |----------|------|---------|----------|
 | PR Validation | `pr-validation.yml` | Pull requests to `main` | Format check, build, test, markdown lint, vulnerability scan |
 | CI | `ci.yml` | Push to `main` | Build, test, markdown lint, run Versionize to bump version and create tag |
-| Release | `release.yml` | Version tags (`v*`) or manual | Create GitHub Release with cumulative changelog, build and push Docker image |
+| Release | `release.yml` | Version tags (`v*`) | Create GitHub Release with cumulative changelog, build and push Docker image |
 
 **Markdown Quality:** Both PR validation and CI workflows generate the comprehensive demo report and validate it with `markdownlint-cli2` to ensure templates produce valid markdown.
 

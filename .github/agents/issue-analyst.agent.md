@@ -7,7 +7,7 @@ tools: ['search', 'read/readFile', 'search/listDirectory', 'search/codebase', 's
 handoffs:
   - label: Hand off to Developer
     agent: "Developer"
-    prompt: Review the issue analysis above and implement the fix.
+    prompt: Review `analysis.md` and implement the fix. Treat `analysis.md` as the source of truth for reproduction steps and expected behavior.
     send: false
 ---
 
@@ -18,6 +18,16 @@ You are the **Issue Analyst** agent for this project. Your role is to investigat
 ## Your Goal
 
 Gather diagnostic information, perform initial analysis, and document the problem clearly so that the Developer or Code Reviewer agents can implement a fix.
+
+## Determine the current work item
+
+As an initial step, determine the current work item folder from the current git branch name (`git branch --show-current`):
+
+- `feature/<NNN>-...` -> `docs/features/<NNN>-.../`
+- `fix/<NNN>-...` -> `docs/issues/<NNN>-.../`
+- `workflow/<NNN>-...` -> `docs/workflow/<NNN>-.../`
+
+If it's not clear, ask the Maintainer for the exact folder path.
 
 ## Important: Bug Fixes vs Feature Requests
 
@@ -44,9 +54,10 @@ Gather diagnostic information, perform initial analysis, and document the proble
 - Review recent changes that might have caused the issue
 - Search codebase for relevant code
 - Document findings clearly with file paths and line numbers
-- Create issue analysis document at docs/issues/<issue-description>/analysis.md
+- Create issue analysis document at docs/issues/NNN-<issue-slug>/analysis.md
 - Propose initial analysis, not final solutions
 - Commit analysis document before handing off to Developer
+- **Commit Amending:** If you need to fix issues or apply feedback for the commit you just created, use `git commit --amend` instead of creating a new "fix" commit.
 
 ### ⚠️ Ask First
 - If the issue requires access to external systems or credentials
@@ -60,6 +71,7 @@ Gather diagnostic information, perform initial analysis, and document the proble
 - Make assumptions without verification
 - Skip diagnostic steps
 - Change code without proper branch and handoff
+- Create "fixup" or "fix" commits for work you just committed; use `git commit --amend` instead.
 
 ## Response Style
 
@@ -88,6 +100,7 @@ Before investigating, review relevant context:
 - [docs/architecture.md](../../docs/architecture.md) - Architecture overview
 - [README.md](../../README.md) - Project overview and usage
 - Recent commits: `git log --oneline -10`
+- Recent commits: `scripts/git-log.sh --oneline -10`
 - CI/CD workflow files in `.github/workflows/`
 
 ## Investigation Approach
@@ -134,7 +147,8 @@ Collect relevant data:
 - Workflow run output (if CI/CD failure)
 - Environment details (OS, .NET version, Docker version)
 - Recent changes: `git log --oneline --since="1 week ago"`
-- Current branch status: `git status`
+- Recent changes: `scripts/git-log.sh --oneline --since="1 week ago"`
+- Current branch status: `scripts/git-status.sh`
 
 **Commands to use:**
 ```bash
@@ -148,13 +162,13 @@ PAGER=cat gh run list --limit 5 --json conclusion,status,name,createdAt
 PAGER=cat gh run view <run-id> --log-failed
 
 # Check git history
-git log --oneline --since="1 week ago" -- <relevant-path>
+scripts/git-log.sh --oneline --since="1 week ago" -- <relevant-path>
 
 # Check for build errors
 dotnet build --no-restore
 
 # Run tests
-dotnet test --verbosity normal
+scripts/test-with-timeout.sh -- dotnet test --verbosity normal
 
 # Check for problems in workspace
 # Use the 'problems' tool to see diagnostics
@@ -185,7 +199,7 @@ Create a clear issue analysis document with:
 
 Commit your analysis document:
 ```bash
-git add docs/issues/<issue-description>/analysis.md
+git add docs/issues/NNN-<issue-slug>/analysis.md
 git commit -m "docs: add issue analysis for <description>"
 ```
 
@@ -194,7 +208,7 @@ Use handoff button to transition to:
 
 ## Output: Issue Analysis Document
 
-Create a document at: `docs/issues/<issue-description>/analysis.md`
+Create a document at: `docs/issues/NNN-<issue-slug>/analysis.md`
 
 ```markdown
 # Issue: <Brief Description>
@@ -257,7 +271,7 @@ Your work is complete when:
 - [ ] Problem is clearly understood and documented
 - [ ] Root cause is identified
 - [ ] Diagnostic information is collected
-- [ ] Issue analysis document is **created and saved to disk** at `docs/issues/<issue-description>/analysis.md`
+- [ ] Issue analysis document is **created and saved to disk** at `docs/issues/NNN-<issue-slug>/analysis.md`
 - [ ] Analysis is committed to the branch
 - [ ] Ready to hand off to Developer
 

@@ -5,6 +5,368 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<a name="1.0.0-alpha.15"></a>
+## [1.0.0-alpha.15](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.14...v1.0.0-alpha.15) (2026-01-02)
+
+### ✨ Features
+
+* add HTML screenshot generator tool ([51ba5b2](https://github.com/oocx/tfplan2md/commit/51ba5b2477cfc6982d4e39ffc94ce914e68d7268))
+
+### 📚 Documentation
+
+* add architecture for 028 html screenshot generation ([6de3100](https://github.com/oocx/tfplan2md/commit/6de31003f5e92a78af9995eecab54bdbd8659daf))
+* add feature specification for 028-html-screenshot-generation ([221f146](https://github.com/oocx/tfplan2md/commit/221f146e72fc8d8ee29937d296464fe8aca7a147))
+* add tasks for 028-html-screenshot-generation ([f65ab17](https://github.com/oocx/tfplan2md/commit/f65ab17a3adb0b42b83d9163568c1b2a77812ac0))
+* add test plans for 028-html-screenshot-generation ([ab38f8e](https://github.com/oocx/tfplan2md/commit/ab38f8ef8445fac4839bc2780094a2d3d4c3fdd8))
+* mark feature 028 as implemented and approved ([df1e73b](https://github.com/oocx/tfplan2md/commit/df1e73b493f5e34d0e0e9643869240dbb885759b))
+
+<a name="1.0.0-alpha.14"></a>
+## [1.0.0-alpha.14](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.13...v1.0.0-alpha.14) (2026-01-01)
+
+### ✨ Features
+
+* improve workflow prompts and handoffs ([a608196](https://github.com/oocx/tfplan2md/commit/a6081962d3db68a3ad8c2e04c030ed262c12359a))
+* **workflow:** add per-agent starter prompts ([5ace647](https://github.com/oocx/tfplan2md/commit/5ace6471cf2e0e91a62e468a37342a692071c826))
+
+### 🐛 Bug Fixes
+
+* **workflow:** avoid option vs task id ambiguity ([6d770db](https://github.com/oocx/tfplan2md/commit/6d770dbc8e0a209277ebc763cb1cbb04e9ecc76d))
+* **workflow:** improve developer progress visibility ([e71cfe5](https://github.com/oocx/tfplan2md/commit/e71cfe50717cd99c2f462ea63267b93ce2524766))
+* **workflow:** show 3 options before selection ([16e9923](https://github.com/oocx/tfplan2md/commit/16e99239e66ed2fc973b5ac8e28e1f91162bfbad))
+
+### ♻️ Refactoring
+
+* **workflow:** sync prompt files with handoffs ([945a7ea](https://github.com/oocx/tfplan2md/commit/945a7ea8e4a76210acd48c233a3ff9555b7e0470))
+
+### 📚 Documentation
+
+* add redacted chat logs for feature 027 ([4f9b8db](https://github.com/oocx/tfplan2md/commit/4f9b8db151f117bc0a09cf14ca7c598085df8710))
+* add retrospective for feature 027 and fix extract-metrics.sh ([5f410ca](https://github.com/oocx/tfplan2md/commit/5f410caf47673a42ef74f03387be3fbb59303d34))
+* **workflow:** add 028 improvement opportunities ([21b4531](https://github.com/oocx/tfplan2md/commit/21b4531a0ae9a26240b274d16dff800fc4292ab0))
+* **workflow:** mark task 1 done (PR [#187](https://github.com/oocx/tfplan2md/issues/187)) ([558e7ea](https://github.com/oocx/tfplan2md/commit/558e7ea6ab1e200c6585feda0756cf339d6c23aa))
+* **workflow:** mark task 2 done ([6422b6a](https://github.com/oocx/tfplan2md/commit/6422b6ac89df94ee26aca746cf565acfa5443eef))
+* **workflow:** require global unique NNN across change types ([5b5fe16](https://github.com/oocx/tfplan2md/commit/5b5fe168410da7ecdbb23bc25fd7803d72c20cfc))
+* **workflow:** require recap and next steps when blocked ([243247d](https://github.com/oocx/tfplan2md/commit/243247d10099a4a13ca291042e98823132eb44d0))
+* **workflow:** standardize branch naming for prompt inference ([281c61f](https://github.com/oocx/tfplan2md/commit/281c61fd9b1fa9bd35843d247b980ca79cda9d25))
+
+<a name="1.0.0-alpha.13"></a>
+## [1.0.0-alpha.13](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.12...v1.0.0-alpha.13) (2026-01-01)
+
+### ✨ Features
+
+* add html renderer tool and tests ([382ab00](https://github.com/oocx/tfplan2md/commit/382ab008872dc09debd8cf7c01af5f2c91d17926))
+* add merge conflict resolution skill ([d4ee8fa](https://github.com/oocx/tfplan2md/commit/d4ee8fa561d6ca8cabf117d4f0557173f296440b))
+* add wrapper templates and applier ([7d7bf38](https://github.com/oocx/tfplan2md/commit/7d7bf387d365fee5c911995878410b8c2322a6a1))
+
+### 🐛 Bug Fixes
+
+* align renderer markup with gold outputs ([eeb3fc5](https://github.com/oocx/tfplan2md/commit/eeb3fc5e5a5bf53c7a0ad3b76809fb085ef3f904))
+* **agents:** remove notebook tool references ([08fb150](https://github.com/oocx/tfplan2md/commit/08fb1502fb8b27e6f7cb4216272cf190b2c759c3))
+
+### ♻️ Refactoring
+
+* split html post-processing ([e867476](https://github.com/oocx/tfplan2md/commit/e867476f2d9b8c379bdfe738aef26bffd50ea877))
+
+### 📚 Documentation
+
+* add architecture for markdown html rendering ([8cd93af](https://github.com/oocx/tfplan2md/commit/8cd93affecc94fe8e85d4a351bda959582b0dccb))
+* add code review report for feature 027 ([d6ed5bd](https://github.com/oocx/tfplan2md/commit/d6ed5bd044a73151747da8b49b1f1939e3545686))
+* add feature specification for markdown HTML rendering tool ([161e666](https://github.com/oocx/tfplan2md/commit/161e66623d3a5339e1be253e2adac41f2194c4b7))
+* add html renderer usage ([15462d8](https://github.com/oocx/tfplan2md/commit/15462d83286ed8bcb8c014f2c3a5bc1b4869f100))
+* add tasks for markdown-html-rendering ([47a0123](https://github.com/oocx/tfplan2md/commit/47a01232920a3617030636a282ea6350baa2e7ca))
+* add test plan and UAT test plan for 027-markdown-html-rendering ([9dc9a0e](https://github.com/oocx/tfplan2md/commit/9dc9a0ebc050905872053ada72ba78bb16a708e8))
+* expand HTML renderer documentation in features.md ([35d43b5](https://github.com/oocx/tfplan2md/commit/35d43b50eec744befca4e568842aca59e59dd860))
+* mark markdown html rendering tasks complete ([0a4e627](https://github.com/oocx/tfplan2md/commit/0a4e6279009212e993dbc5a0d0bea388ff20541b))
+* **agents:** treat non-functional improvements as features ([ca81754](https://github.com/oocx/tfplan2md/commit/ca81754c2e816478ef6ee37cdab771d20e2e58b6))
+* **workflow:** update 025/026 task statuses ([4660b98](https://github.com/oocx/tfplan2md/commit/4660b98bbf7b9038f0d79fcd1210aaad5d43e1c1))
+
+<a name="1.0.0-alpha.12"></a>
+## [1.0.0-alpha.12](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.11...v1.0.0-alpha.12) (2026-01-01)
+
+### 🐛 Bug Fixes
+
+* stop guessing agent attribution in retros ([bd1b8f9](https://github.com/oocx/tfplan2md/commit/bd1b8f9c3f039709004e5904f4e7aa2619a5958e))
+
+### 📚 Documentation
+
+* **workflow:** clarify numeric option selection ([0962b07](https://github.com/oocx/tfplan2md/commit/0962b07d1019b88436862160567690d684e188cf))
+* **workflow:** require snapshot justification in reviews ([c41d0ff](https://github.com/oocx/tfplan2md/commit/c41d0ffd5aad4dae6f8c4571ead182d0a5beff82))
+* **workflow:** require tests before marking done ([329e866](https://github.com/oocx/tfplan2md/commit/329e866161ea5a40ea8edd245cad123fdcf4ebbb))
+* **workflow:** update improvement tracker statuses ([7d55a5a](https://github.com/oocx/tfplan2md/commit/7d55a5a12481257aae5c5c4ba2bef9ea3cf43ea6))
+
+<a name="1.0.0-alpha.11"></a>
+## [1.0.0-alpha.11](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.10...v1.0.0-alpha.11) (2025-12-31)
+
+### ✨ Features
+
+* **workflow:** add snapshot integrity guardrail ([1f256c7](https://github.com/oocx/tfplan2md/commit/1f256c757a708b54c6939b0a26d349ab8d487d1b))
+
+### 📚 Documentation
+
+* **workflow:** prefer direct script invocation ([8cbe3f6](https://github.com/oocx/tfplan2md/commit/8cbe3f65e0f6210db59e432bc82d2727bb8814c6))
+* **workflow:** require direct script invocation ([6895152](https://github.com/oocx/tfplan2md/commit/68951523e703504c4429f130dcf0145416ce4747))
+
+<a name="1.0.0-alpha.10"></a>
+## [1.0.0-alpha.10](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.9...v1.0.0-alpha.10) (2025-12-31)
+
+### ✨ Features
+
+* **workflow:** add dotnet test timeout wrapper ([f1b13dd](https://github.com/oocx/tfplan2md/commit/f1b13dd69e18891a6d8e7a7c8807a8636fc9cd2a))
+
+<a name="1.0.0-alpha.9"></a>
+## [1.0.0-alpha.9](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.8...v1.0.0-alpha.9) (2025-12-31)
+
+### 🐛 Bug Fixes
+
+* **uat:** stop polling on abandoned PRs ([6332dab](https://github.com/oocx/tfplan2md/commit/6332dabc53f17926bff8066d17631604e1d5ddee))
+
+<a name="1.0.0-alpha.8"></a>
+## [1.0.0-alpha.8](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.7...v1.0.0-alpha.8) (2025-12-31)
+
+### ✨ Features
+
+* **workflow:** add workspace-local temp file policy ([a43a52b](https://github.com/oocx/tfplan2md/commit/a43a52b89c783635bb5b8cc4c70c2b3c330c6b48))
+
+### 🐛 Bug Fixes
+
+* **agent:** prevent web-designer from making unrelated changes and starting implementation without approval ([01dd0d7](https://github.com/oocx/tfplan2md/commit/01dd0d7f78d2fe376754c67e42a073ad881520d5))
+
+### 📚 Documentation
+
+* finalize retrospective for feature 026 and improve analyze-chat.py ([01eef99](https://github.com/oocx/tfplan2md/commit/01eef9981fab48097d92274100d4b5ac8ccff0ff))
+
+<a name="1.0.0-alpha.7"></a>
+## [1.0.0-alpha.7](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.6...v1.0.0-alpha.7) (2025-12-31)
+
+### ✨ Features
+
+* add formatted value wrappers ([7585207](https://github.com/oocx/tfplan2md/commit/758520756edc6e13d18c56dbd1dba0e5b249e27e))
+* add template loader and resolver ([8f8ef92](https://github.com/oocx/tfplan2md/commit/8f8ef92ac128d1026485dd8ba7001f8e15131a50))
+* add view models and factories for NSG, firewall, and role assignment ([1fcdfe8](https://github.com/oocx/tfplan2md/commit/1fcdfe88c061b68dbadff0f98ced31d894c9b26b))
+* add Web Designer agent for website development and maintenance ([c538de8](https://github.com/oocx/tfplan2md/commit/c538de86f8411f08520e816b8a7a6d7306fdbcaf))
+* implement template rendering simplification and fix naming inconsistencies ([926cbd0](https://github.com/oocx/tfplan2md/commit/926cbd0ea2bcc0ccc6e800d6ad7a0bb08f0575bb))
+* split scriban helpers ([690fb81](https://github.com/oocx/tfplan2md/commit/690fb818a711bc56fd3e68c27671301f6b6e6c09))
+* **workflow:** add improvements from feature 024 retrospective ([a82c96c](https://github.com/oocx/tfplan2md/commit/a82c96c5ade28a3725ba56dc75f77fab21c0cf03))
+
+### 🐛 Bug Fixes
+
+* resolve CA1859 warnings in view model factories ([a1f007f](https://github.com/oocx/tfplan2md/commit/a1f007fdd989513f5b36eda6ed448de252079cb4))
+* restore principal name display and boolean lowercase formatting ([4d5e9ff](https://github.com/oocx/tfplan2md/commit/4d5e9ffd610b48ae5ed2f7acede109f5b195017b))
+* restore simple-diff markdown output and rename from standard-diff ([5ed981b](https://github.com/oocx/tfplan2md/commit/5ed981bb879075325e94ef5049f5bb98a4adc497))
+* **rendering:** deduplicate principal type and icon in role assignments ([c0fc85c](https://github.com/oocx/tfplan2md/commit/c0fc85c4a1c2bce5f8a6a7694db14930b51abe27))
+
+### ♻️ Refactoring
+
+* migrate role assignment template to view model pattern ([cfe9f19](https://github.com/oocx/tfplan2md/commit/cfe9f19aaa5f795a22ee05e32c005abdae179e34))
+* remove HTML anchor comments from templates ([cadf930](https://github.com/oocx/tfplan2md/commit/cadf930c71ba5b6ee8c0a542663a1f6d5ef1dd02))
+* **firewall:** complete view model migration for firewall template ([0bfa22c](https://github.com/oocx/tfplan2md/commit/0bfa22c9a781ce1135499ad5568555df4ed85945))
+* **nsg:** complete view model migration for NSG template ([486795c](https://github.com/oocx/tfplan2md/commit/486795ca6b301793a9875b447971e8d5d1e5d837))
+* **nsg:** use view model for update scenario rules table ([160a556](https://github.com/oocx/tfplan2md/commit/160a556216c0b546e9f32a045c15c974916f6151))
+* **rendering:** implement single-pass template dispatch ([5fdc4f2](https://github.com/oocx/tfplan2md/commit/5fdc4f29ab2a9b93effebc86346e2c04db840c02))
+
+### 📚 Documentation
+
+* add architecture for 026-template-rendering-simplification ([7f1e487](https://github.com/oocx/tfplan2md/commit/7f1e487783cf4cebb550d331f274cac96bc1cbba))
+* add feature specification for 026-template-rendering-simplification ([ef68478](https://github.com/oocx/tfplan2md/commit/ef68478d0640d21d3153c4a6982ba9e0add98d00))
+* add retrospective for visual report enhancements and analysis script ([47cab26](https://github.com/oocx/tfplan2md/commit/47cab264c674ff81eb286306329efcf66932f9b5))
+* add tasks for template rendering simplification ([7b99331](https://github.com/oocx/tfplan2md/commit/7b993311e6b0fe205a6d618878bf82f188feee6a))
+* add test plan for 026-template-rendering-simplification ([c2dd6f1](https://github.com/oocx/tfplan2md/commit/c2dd6f1c32e3caf6151f01570a76a09da9d720d2))
+* add UAT report for template rendering simplification (failed) ([8b4543b](https://github.com/oocx/tfplan2md/commit/8b4543b69b82c168e0da55e5fb8f0251b2f1b5dd))
+* adopt numbered feature and issue folders ([9c52f29](https://github.com/oocx/tfplan2md/commit/9c52f29330b25311d3846ec423befcdb8079e694))
+* align workflow numbering with chronology ([706c9f0](https://github.com/oocx/tfplan2md/commit/706c9f08634ac8e3be0b0af088c34cfbaa66de0d))
+* implement global chronological numbering for features, issues, and workflow ([d3573c5](https://github.com/oocx/tfplan2md/commit/d3573c59c2bc82b49fa59688cbe790842cc18221))
+* number workflow docs folders ([0d493ee](https://github.com/oocx/tfplan2md/commit/0d493eef1e2cb0bff45a41b6077659a129333827))
+* update demo artifacts for single-pass rendering ([2ddcaca](https://github.com/oocx/tfplan2md/commit/2ddcaca2dc9cf534ce019573ae2b22ebf5e79d1c))
+* **workflow:** add visual feedback analysis and reprioritize ([73219cd](https://github.com/oocx/tfplan2md/commit/73219cd80859a530c3735f9eca1952689101aa15))
+
+<a name="1.0.0-alpha.6"></a>
+## [1.0.0-alpha.6](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.5...v1.0.0-alpha.6) (2025-12-29)
+
+### ✨ Features
+
+* **visual:** enhance report with semantic icons, collapsible sections, and improved layout ([9549ad1](https://github.com/oocx/tfplan2md/commit/9549ad1293c973b21834246b43b0ace5324fb31e))
+
+### 📚 Documentation
+
+* replace architecture.md with comprehensive arc42 documentation ([7ca9ad3](https://github.com/oocx/tfplan2md/commit/7ca9ad3b526ee2ba3068c2c58278fd868fd1228b))
+
+<a name="1.0.0-alpha.5"></a>
+## [1.0.0-alpha.5](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.4...v1.0.0-alpha.5) (2025-12-29)
+
+### ✨ Features
+
+* add arc42 architecture documentation skill for Architect agent ([176e00b](https://github.com/oocx/tfplan2md/commit/176e00b6efc09699a83f9235c2c01bac546dad45))
+
+### ♻️ Refactoring
+
+* enforce tool preference and todo tracking in arc42 skill ([a847cfb](https://github.com/oocx/tfplan2md/commit/a847cfb3f0f7c6a5d60a2443986438e68bb3d3d2))
+* strengthen arc42 skill requirements for documentation integrity ([497b142](https://github.com/oocx/tfplan2md/commit/497b142c41f94b0ed1f94f426db30b69c6d84fba))
+
+### 📚 Documentation
+
+* add Use Cases section highlighting pull request review challenges ([06de975](https://github.com/oocx/tfplan2md/commit/06de9759baa83dd52bec1da3d543489b58460b61))
+
+<a name="1.0.0-alpha.4"></a>
+## [1.0.0-alpha.4](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.3...v1.0.0-alpha.4) (2025-12-28)
+
+### ✨ Features
+
+* add rejection tracking to retrospective analysis and update checklist ([e43b88c](https://github.com/oocx/tfplan2md/commit/e43b88cafc424f7ba088df9c3380e9c369b7b8db))
+
+### 📚 Documentation
+
+* add GitHub community standards and open source readiness ([5160a17](https://github.com/oocx/tfplan2md/commit/5160a17c40cb81bab26b17c4d8f7e0a472b286b4))
+* add retrospective for workflow improvement cycle ([b92db7b](https://github.com/oocx/tfplan2md/commit/b92db7b0fc90d7df4ac946f047a074a3e88749fa))
+
+<a name="1.0.0-alpha.3"></a>
+## [1.0.0-alpha.3](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.2...v1.0.0-alpha.3) (2025-12-28)
+
+### ✨ Features
+
+* **workflow:** add agent validation tool and update improvement statuses ([3a0d9f9](https://github.com/oocx/tfplan2md/commit/3a0d9f9811491542f3839ff96ff21e3028b8077b))
+* **workflow:** add validate-agent skill ([455eabb](https://github.com/oocx/tfplan2md/commit/455eabbbb7e875a5d70db33751ab2bdf4e02f7f0))
+
+<a name="1.0.0-alpha.2"></a>
+## [1.0.0-alpha.2](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.1...v1.0.0-alpha.2) (2025-12-28)
+
+### ✨ Features
+
+* **workflow:** add analyze-run.sh and update improvement statuses ([54dc66c](https://github.com/oocx/tfplan2md/commit/54dc66c2a41de5d02ee6a51f2f93c12665f0be51))
+
+<a name="1.0.0-alpha.1"></a>
+## [1.0.0-alpha.1](https://github.com/oocx/tfplan2md/compare/v1.0.0-alpha.0...v1.0.0-alpha.1) (2025-12-28)
+
+### ✨ Features
+
+* **retrospective:** add automation suggestions and DoD checklist ([b043372](https://github.com/oocx/tfplan2md/commit/b043372f3bac611e55309ce383b1bf66c3fda2e0))
+* **workflow:** enforce pager suppression in scripts and agent instructions ([adb32ec](https://github.com/oocx/tfplan2md/commit/adb32ec29b4932fbb059821825587b585e8adb1e))
+
+### 🐛 Bug Fixes
+
+* **agent:** enforce Task Planner boundary - no implementation without approval ([7efc708](https://github.com/oocx/tfplan2md/commit/7efc708b834631a8ea264fa50d34937f8b5e2a5a))
+* **agents:** implement 6 quick-win workflow improvements ([83c9294](https://github.com/oocx/tfplan2md/commit/83c9294c075876880fa7a71d931818ab162a808d))
+* **ci:** ensure PR validation runs for all PRs ([b5f17a3](https://github.com/oocx/tfplan2md/commit/b5f17a3cfae7308112b95bf7c0b4d8fe9962f74a))
+* **ci:** remove path filters from UAT validation workflow ([d7b19e4](https://github.com/oocx/tfplan2md/commit/d7b19e41b9f56945a33ad32ed7639143e440249d))
+* **ci:** run PR validation on workflow changes ([9252b83](https://github.com/oocx/tfplan2md/commit/9252b832c82e4ac17b108ef3ed7fb0adf41b314d))
+* **retrospective:** strengthen retrospective rubric ([2a5acce](https://github.com/oocx/tfplan2md/commit/2a5acced7db8beabad21329a6ef7866797d1c74e))
+* **workflow:** adjust agent models based on retrospectives ([45a4d77](https://github.com/oocx/tfplan2md/commit/45a4d77fa34b8a24eafc1c097ae7b98ac9a18ba6))
+
+### 📚 Documentation
+
+* add improvement [#21](https://github.com/oocx/tfplan2md/issues/21) - fix UAT artifact validation check ([475297c](https://github.com/oocx/tfplan2md/commit/475297ce1e5bc55f23f904461fc9eaeec3b68c26))
+* add Issue Analyst to retrospective agent performance ([fcf86b6](https://github.com/oocx/tfplan2md/commit/fcf86b6d02181cd09237f9b6ecf60824f4efa9f6))
+* update retrospective with critical user feedback ([5664e39](https://github.com/oocx/tfplan2md/commit/5664e394dd393ab767bcd5e4ba9fa8d6f218e3a7))
+* **workflow:** mark release/versionize improvements complete ([b2842fd](https://github.com/oocx/tfplan2md/commit/b2842fd62a766f22e7b6c71edfe0f02ccdff6d15))
+* **workflow:** note tests unnecessary for docs-only changes ([07a6f31](https://github.com/oocx/tfplan2md/commit/07a6f31e712601892f338e215b2c86f273c08a4c))
+* **workflow:** update improvement statuses ([df83a0e](https://github.com/oocx/tfplan2md/commit/df83a0ea0a10d278574898edefba556ed6054703))
+
+<a name="1.0.0-alpha.0"></a>
+## [1.0.0-alpha.0](https://github.com/oocx/tfplan2md/compare/v0.49.0...v1.0.0-alpha.0) (2025-12-27)
+
+### ✨ Features
+
+* add simulation mode constraints to UAT agents ([f4881f1](https://github.com/oocx/tfplan2md/commit/f4881f1301205ebc14bcb6641476e81d6c46eadd))
+* add test instructions to UAT PR bodies ([cf1507b](https://github.com/oocx/tfplan2md/commit/cf1507b47f56bc06fcaf875cea7a2de3e1af3662))
+* allow custom report title ([275d884](https://github.com/oocx/tfplan2md/commit/275d88404889510c6f0d28b27d7a683f7b3cf3a8))
+* implement strict simulation mode for UAT workflow ([5779737](https://github.com/oocx/tfplan2md/commit/5779737cb20753ccd206b6a4a5e2e80e9b0a4c01))
+* implement subagent pattern for autonomous UAT execution ([5b38711](https://github.com/oocx/tfplan2md/commit/5b38711fe2d8a9361309194610e5701b050632f6))
+* **agent:** post PR overview links before running UAT script ([775f4a6](https://github.com/oocx/tfplan2md/commit/775f4a6e15d1ac1d4cfb2dda47d66a91c2033f3f))
+* **retrospective:** add agent-grouped analysis and automation insights ([fd203a0](https://github.com/oocx/tfplan2md/commit/fd203a014d84ccbd7c99703822ba40fa222c05fd))
+* **retrospective:** add rejection analysis and time breakdown ([8d33fc5](https://github.com/oocx/tfplan2md/commit/8d33fc58646e94c4fbce5547b8b463eb1d165d9a))
+* **scripts:** add stdin support to PR scripts to avoid temp files ([7677f99](https://github.com/oocx/tfplan2md/commit/7677f998d4744144ab7e5048a323de28773f6e46))
+* **skill:** add extract-metrics.sh script for chat export analysis ([b8c9559](https://github.com/oocx/tfplan2md/commit/b8c9559868278cbed0736bc30be2b11ce176e604))
+* **skill:** add JSON output to extract-metrics.sh for cross-feature analysis ([fe4e2a1](https://github.com/oocx/tfplan2md/commit/fe4e2a15dda6353420d066d27e9100c854cceb27))
+* **skills:** add analyze-chat-export skill for retrospective metrics ([00cfb41](https://github.com/oocx/tfplan2md/commit/00cfb4138790be09dd3540070acb167903fdd639))
+* **uat:** add background agent for autonomous UAT execution ([0176192](https://github.com/oocx/tfplan2md/commit/0176192bd586a407200323aab04415deead95b59))
+* **uat:** configure GitHub UAT to use dedicated tfplan2md-uat repository ([6e882cc](https://github.com/oocx/tfplan2md/commit/6e882cc894a01a0ed8fad3a0b0e6fab3a25f1c7c))
+* **uat:** output PR URLs in UAT scripts ([8216229](https://github.com/oocx/tfplan2md/commit/82162299c65ffc725d0b9495225f235063b1f1ff))
+
+### 🐛 Bug Fixes
+
+* address report-title review feedback ([21dd74c](https://github.com/oocx/tfplan2md/commit/21dd74c1b815477e6ed84a3994de441d5e095f7d))
+* remove quotes from EOF delimiter in release workflow ([a5e4090](https://github.com/oocx/tfplan2md/commit/a5e4090ae59aa7def2fe3f1d034fb2868b4e1698))
+* **agent:** simplify UAT Tester to run single command without monitoring ([892eb7e](https://github.com/oocx/tfplan2md/commit/892eb7efd910c5b3b57f7f2584d3808897ad9c60))
+* **agent:** UAT Tester should run script in blocking mode, not background ([231ee5e](https://github.com/oocx/tfplan2md/commit/231ee5ee1a601a1522f299a6f713bb4add03edbf))
+* **uat:** correct background agent tool definitions ([b94fe59](https://github.com/oocx/tfplan2md/commit/b94fe59800ef28cca6c76db1faf6b4ff56adca29))
+* **uat:** enable polling in simulation mode to allow approval testing ([3ccf23e](https://github.com/oocx/tfplan2md/commit/3ccf23eddb9e944a743a49bf0367ce43147af172))
+* **uat:** remove leftover simulation artifact template ([7982930](https://github.com/oocx/tfplan2md/commit/79829303ee039e87d5e4ae07616454406bcb4c94))
+
+### ♻️ Refactoring
+
+* require feature-specific test descriptions in UAT PRs ([a771882](https://github.com/oocx/tfplan2md/commit/a77188296885f994d835c00ab26b7709c2505f5d))
+* simplify UAT to single agent calling uat-run.sh directly ([77bc2e3](https://github.com/oocx/tfplan2md/commit/77bc2e3f1535f9d97e9b492b65e1fc370dc04189))
+* **scripts:** remove --body-file and --description options, enforce stdin-only ([4338625](https://github.com/oocx/tfplan2md/commit/4338625bf16197c1e8c34b58a7b354b7c6b170b9))
+* **uat:** simplify simulation to use default artifacts ([50827df](https://github.com/oocx/tfplan2md/commit/50827dfec1c98c4d66cadfdd4b558d966b0656e0))
+
+### 📚 Documentation
+
+* add architecture for custom report title ([83fa608](https://github.com/oocx/tfplan2md/commit/83fa608bc15f6211fd19f231a0e99f94a2bf9f46))
+* add detailed examples for feature-specific test descriptions ([7154403](https://github.com/oocx/tfplan2md/commit/71544034bff0e8702f8896eb7fa2c71f618e2d2f))
+* add feature specification for custom report title ([37cfabf](https://github.com/oocx/tfplan2md/commit/37cfabfccd57f265b317e89c36b6ab9d02aadd4a))
+* add implementation tasks for custom report title ([3a7eef4](https://github.com/oocx/tfplan2md/commit/3a7eef4876ce31c5bd355e1e689bf87ed5b8657e))
+* add mandatory artifact regeneration checklist for bug fixes ([fd54ab8](https://github.com/oocx/tfplan2md/commit/fd54ab88052cb9f83af3706d8c0c459a6904a3dc))
+* add retrospective for custom report title feature ([cf5c4e3](https://github.com/oocx/tfplan2md/commit/cf5c4e3cc20008027bad1e91e00193f04c0eeadc))
+* add retrospective improvements tracker ([91ac9a5](https://github.com/oocx/tfplan2md/commit/91ac9a515f1d4af88573ff81b41533c42461cf27))
+* add test plan for custom report title ([ae2e922](https://github.com/oocx/tfplan2md/commit/ae2e9229092e7145e7efd72eb18a70a368f30f06))
+* add user note about automation rate to retrospective ([f7d844b](https://github.com/oocx/tfplan2md/commit/f7d844b85bfc5a8e0c1964538fcb7be95fcd6a4d))
+* align release docs with tag-only triggers ([e77d817](https://github.com/oocx/tfplan2md/commit/e77d817e01f5c38d31ac514036d01683b72381e2))
+* clarify that templates add the # character, not the tool ([2a0f496](https://github.com/oocx/tfplan2md/commit/2a0f496e57c04301997cef452f31b099293cb5b9))
+* clarify that templates control their own default titles ([f444dd7](https://github.com/oocx/tfplan2md/commit/f444dd7e6498f56618e63fcef9a428843e99669c))
+* document prerelease + tag-only release rationale ([674ee00](https://github.com/oocx/tfplan2md/commit/674ee006632be231fbf6df26a3c874ef66774689))
+* enforce artifact ownership boundaries across agents ([89a5e8b](https://github.com/oocx/tfplan2md/commit/89a5e8b002b5331ce5b4f94dfe9979dfd15f878b))
+* improve Release Manager safety and efficiency ([142d939](https://github.com/oocx/tfplan2md/commit/142d9393721fa6112c7046de06c529ce168d3434))
+* mark issue [#6](https://github.com/oocx/tfplan2md/issues/6) as completed in retrospective tracker ([c4eeb1c](https://github.com/oocx/tfplan2md/commit/c4eeb1ce2d9f59b45922c1da7915aafa752873ae))
+* mark issue [#7](https://github.com/oocx/tfplan2md/issues/7) as done - 12/13 completed (92%) ([4846cae](https://github.com/oocx/tfplan2md/commit/4846cae87fd62dc691b538a85bf3686e0c3f67e4))
+* mark issues [#9](https://github.com/oocx/tfplan2md/issues/9) and [#10](https://github.com/oocx/tfplan2md/issues/10) as completed in retrospective tracker ([b23ce8c](https://github.com/oocx/tfplan2md/commit/b23ce8cb671dbf07a0b563463718a10aab9e22f8))
+* move UAT test plan responsibility to Quality Engineer ([8900515](https://github.com/oocx/tfplan2md/commit/8900515a59bd3edff6fe6242ed5c8bfed6160d12))
+* move UAT test plan to feature folder and update agent instructions ([924c26f](https://github.com/oocx/tfplan2md/commit/924c26fd10fea05159799f30dd3ef8b62f787f52))
+* prevent Task Planner from starting implementation ([388ce98](https://github.com/oocx/tfplan2md/commit/388ce985ac0631e384a86bbecae1bcf05657d82f))
+* remove UAT Background agent references from agents.md ([c95489e](https://github.com/oocx/tfplan2md/commit/c95489e663d92649fe391569c6c622e1ad051c80))
+* require full lifecycle analysis and mandatory metrics in Retrospective ([1a44576](https://github.com/oocx/tfplan2md/commit/1a44576c837838fc4b49820c318f46382d1db6d2))
+* update custom report title UAT report with results ([e3109ab](https://github.com/oocx/tfplan2md/commit/e3109abc682e7c7bbed8c432185fe5d296179cda))
+* update retrospective agent performance table ([a1ac4eb](https://github.com/oocx/tfplan2md/commit/a1ac4ebceb2355c55892701c4698217130ca39a6))
+* update retrospective with interactive feedback and agent improvements ([16e41b6](https://github.com/oocx/tfplan2md/commit/16e41b69050221d0ca15d8d5f220a298242cf620))
+* update retrospective with more critical evaluation ([fee1860](https://github.com/oocx/tfplan2md/commit/fee186036834a64ae736fdd554e0fa7b96ac259a))
+* update retrospective with user observations and new action items ([fe88c2d](https://github.com/oocx/tfplan2md/commit/fe88c2d86e67d18c7ee443547fa43069ecd69caf))
+* update tasks for custom report title ([745b4b9](https://github.com/oocx/tfplan2md/commit/745b4b9e1d5ed3da92fed448e64bf7495c708b1b))
+* update test plan with UAT artifact instructions ([43dcada](https://github.com/oocx/tfplan2md/commit/43dcada5d51151329f9de364d1d838b539fdb580))
+* update UAT artifact instructions in QE and Tester agents ([8a2ecad](https://github.com/oocx/tfplan2md/commit/8a2ecad98fe2e462856ac740d9465b748ab598df))
+* **agent:** instruct UAT Tester to run script in background and report PR links immediately ([afdaf6f](https://github.com/oocx/tfplan2md/commit/afdaf6f87b30b76a846b6101071d981f3934a205))
+* **retrospective:** add chat log ([41ea358](https://github.com/oocx/tfplan2md/commit/41ea358bbe9925b07036330bd6d6200c38326d48))
+* **skill:** remove agent-dependent metrics from chat analysis ([137d0c5](https://github.com/oocx/tfplan2md/commit/137d0c59cebefc2ff493e3dcc9f25687fd8b47db))
+* **skill:** remove misleading workaround for agent limitation ([c304731](https://github.com/oocx/tfplan2md/commit/c304731f3df8a65f9ddbdbd31ebefcaa11f6ab7a))
+* **skills:** add VS Code source-based chat export format specification ([88beaf2](https://github.com/oocx/tfplan2md/commit/88beaf29238e3853ddc4a2f1177e22886049d083))
+* **skills:** update create-pr-github skill to use stdin instead of --body-file ([2046e43](https://github.com/oocx/tfplan2md/commit/2046e43ff34f33921bf671a0622cc92ba8802869))
+
+### Breaking Changes
+
+* **scripts:** remove --body-file and --description options, enforce stdin-only ([4338625](https://github.com/oocx/tfplan2md/commit/4338625bf16197c1e8c34b58a7b354b7c6b170b9))
+
+<a name="0.49.0"></a>
+## [0.49.0](https://github.com/oocx/tfplan2md/compare/v0.48.0...v0.49.0) (2025-12-26)
+
+### ✨ Features
+
+* implement backtick formatting for Azure resource ID values ([ee95011](https://github.com/oocx/tfplan2md/commit/ee9501196e00f1f8481fae5b9f229c26b9e0064f))
+* implement model-driven large value detection for Azure resource IDs ([2969f9b](https://github.com/oocx/tfplan2md/commit/2969f9bd5864fb2f6ea186a5b64149d7cfcb8d5b))
+
+### 🐛 Bug Fixes
+
+* **ci:** ensure workflows can push tags — persist-credentials and authenticated push; disable gh pager in release step ([03a8a5c](https://github.com/oocx/tfplan2md/commit/03a8a5c8db3616357804ab0183d667d915945e31))
+* **uat:** block minimal artifacts and add validation helper + tests ([50a5ae3](https://github.com/oocx/tfplan2md/commit/50a5ae31f21bd510291acf80151d651efe0605ee))
+* **uat:** keep validate_artifact stdout clean ([68d0c70](https://github.com/oocx/tfplan2md/commit/68d0c706b8b111bb3b3bef67e49644986381a684))
+
+### 📚 Documentation
+
+* add architecture for universal Azure resource ID formatting ([e214ab3](https://github.com/oocx/tfplan2md/commit/e214ab36692d5e393478ae0c6aae4ac9b2096c63))
+* add feature specification for universal Azure resource ID formatting ([8804f2e](https://github.com/oocx/tfplan2md/commit/8804f2ea8be80caedb6fa051a7c93a446aebe295))
+* add tasks for universal Azure resource ID formatting ([8a0d8f0](https://github.com/oocx/tfplan2md/commit/8a0d8f0ac127e831535ddd1a96b48904ae0380a4))
+* add test plan for universal Azure resource ID formatting ([1536620](https://github.com/oocx/tfplan2md/commit/15366208fc3cf40608ae2e988c420479a23288c7))
+* align Azure ID formatting examples and add review report ([b48e36f](https://github.com/oocx/tfplan2md/commit/b48e36f1bc0aec67423fb805a69f7d0a0c78bdb2))
+* enforce rebase-only release merges ([2295e7b](https://github.com/oocx/tfplan2md/commit/2295e7bc042015b7ad3ade8cbe2cd81fd6551857))
+* mark q4 workflow roadmap complete ([91c8eb3](https://github.com/oocx/tfplan2md/commit/91c8eb3ecfe5503519483797f93039425bfe5342))
+* **release:** prefer scripts/pr-github.sh for create+merge (rebase-and-merge) ([929f726](https://github.com/oocx/tfplan2md/commit/929f72690ca47bf6110d00cd2f7703cadfc6c98c))
+
 <a name="0.48.0"></a>
 ## [0.48.0](https://github.com/oocx/tfplan2md/compare/v0.47.0...v0.48.0) (2025-12-26)
 

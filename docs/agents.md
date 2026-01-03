@@ -13,8 +13,11 @@ The workflow begins when the **Maintainer** identifies a need:
 - **New Feature**: Start with the **Requirements Engineer** agent to gather requirements and create a Feature Specification
 - **Bug Fix / Incident**: Start with the **Issue Analyst** agent to investigate and document the issue
 - **Workflow Improvement**: Start with the **Workflow Engineer** agent to modify the development process itself
+- **Website Changes**: Start with the **Web Designer** agent to implement design, content, or functionality changes to the tfplan2md website
 
 Throughout the workflow, the Maintainer coordinates handoffs between agents and provides clarifications as needed.
+
+**Verification note:** If a change only touches agent instructions / skills / documentation (for example `.github/agents/`, `.github/skills/`, `.github/copilot-instructions.md`, or `docs/`), running `dotnet test` is not required because the test suite does not validate those changes. Run `dotnet test` when C# code changes.
 
 ---
 
@@ -23,6 +26,12 @@ Throughout the workflow, the Maintainer coordinates handoffs between agents and 
 Agents are empowered by **Agent Skills**, which are specialized, reusable capabilities stored in `.github/skills/`. Skills encapsulate complex workflows, scripts, and strict procedures (like UAT or Release) that can be loaded on-demand by agents. This ensures consistency and reduces the cognitive load on the primary agent prompts.
 
 When authoring skills, prefer designs that **minimize Maintainer approval interruptions** (terminal approvals): use a small number of stable wrapper commands, batch steps when practical, and reuse existing repo scripts.
+
+For git working-tree checks, prefer the stable wrapper `scripts/git-status.sh` over raw `git status` so it can be permanently allowed once and reused with any needed flags.
+
+For git history checks, prefer the stable wrapper `scripts/git-log.sh` over raw `git log` so agents can use arbitrary log flags/ranges without triggering approval churn.
+
+For git diffs, prefer the stable wrapper `scripts/git-diff.sh` over raw `git diff` so agents can compare changes with arbitrary args/paths without triggering approval churn.
 
 ### PR Title/Description Guardrail
 
@@ -73,10 +82,12 @@ Format:
 
 | Skill Name | Description |
 | :--- | :--- |
+| `arc42-documentation` | Create comprehensive architecture documentation using the arc42 template structure (12 sections covering introduction, constraints, context, solution strategy, building blocks, runtime, deployment, concepts, decisions, quality, risks, and glossary). |
 | `create-agent-skill` | Create a new Agent Skill following project standards and templates. |
 | `create-pr-github` | Create and (optionally) merge a GitHub pull request (prefer GitHub chat tools; gh/wrappers are fallback), following the repo policy to use rebase and merge for a linear history. |
 | `create-pr-azdo` | Create an Azure DevOps pull request using az devops tooling; include the repo’s linear-history merge preference and ask the Maintainer if merge options differ. |
 | `git-rebase-main` | Safely rebase the current feature branch on top of the latest origin/main. |
+| `merge-conflict-resolution` | Resolve git merge/rebase conflicts safely without losing intended changes; verify by reviewing diffs and searching for conflict markers. |
 | `generate-demo-artifacts` | Generate the comprehensive demo markdown artifact from the current codebase. |
 | `run-uat` | Run User Acceptance Testing by creating a PR with rendered markdown on GitHub or Azure DevOps. |
 | `simulate-uat` | Simulate the UAT workflow (create PR, comment, poll) on GitHub or Azure DevOps using a minimal test artifact and simulated fixes. |
@@ -84,6 +95,7 @@ Format:
 | `watch-uat-github-pr` | Watch a GitHub UAT PR for maintainer feedback or approval by polling comments until approved/passed. |
 | `watch-uat-azdo-pr` | Watch an Azure DevOps UAT PR for maintainer feedback or approval by polling threads and reviewer votes until approved/passed. |
 | `analyze-chat-export` | Extract metrics from VS Code Copilot chat exports for retrospective analysis (model usage, tool invocations, approvals, timing). |
+| `validate-agent` | Validate agent definitions for consistency, model availability, handoff integrity, and tool existence. |
 
 ### Prefer GitHub Chat Tools For PR Inspection
 
@@ -232,6 +244,7 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 
 **Meta-Agent:**
 - **Workflow Engineer** improves and maintains the agent workflow itself (operates outside the normal feature flow).
+- When requesting a Maintainer decision on a `tasks.md` item, the Workflow Engineer presents the 3 recommended options (Option 1/2/3) in chat immediately before asking for the selected ID.
 
 ## Agent Roles & Responsibilities
 
@@ -241,8 +254,8 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 - **Definition of Done:** Issue is clearly documented and ready for Developer to implement fix.
 
 ### 2. Requirements Engineer
-- **Goal:** Gather, clarify, and document user needs for new features.
-- **Deliverables:** High level feature specification from an end-user perspective
+- **Goal:** Gather, clarify, and document needs for new features (including non-functional improvements).
+- **Deliverables:** High level feature specification describing user outcomes and success criteria
 - **Definition of Done:** Requirements are clear, unambiguous, and approved.
 
 ### 3. Architect
@@ -277,9 +290,10 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 - **Definition of Done:** Code is reviewed and approved or sent back for rework.
 
 ### 9. UAT Tester
-- **Goal:** Validate user-facing features in real-world environments.
+- **Goal:** Validate user-facing features in real-world environments by running the `uat-run.sh` script.
 - **Deliverables:** User Acceptance PRs in GitHub and Azure DevOps with rendering verification.
 - **Definition of Done:** Maintainer approves rendering in both platforms, or aborts with documented issues. For Azure DevOps, approval is based on an approval comment or a reviewer vote (not thread resolution alone).
+- **Implementation:** Executes `scripts/uat-run.sh` which handles PR creation, polling, and cleanup.
 
 ### 10. Release Manager
 - **Goal:** Plan, coordinate, and execute releases.
@@ -289,13 +303,22 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 ### 10. Retrospective
 - **Goal:** Identify improvement opportunities for the development workflow.
 - **Deliverables:** Retrospective report with summary, successes, failures, and improvement opportunities.
-- **Definition of Done:** Report is generated and action items are identified.
+- **Key Behavior:** Be evidence-based and critical; prefer chat logs/artifacts/CI status checks for objective event history, cluster findings by theme, and apply a scoring rubric with explicit deductions.
+- **Definition of Done:** Report is generated with action items and a completeness checklist (DoD).
 
 ### 12. Workflow Engineer (Meta-Agent)
 - **Goal:** Analyze, improve, and maintain the agent-based workflow.
-- **Deliverables:** New or updated agent definitions, workflow documentation updates, PRs with workflow changes.
+- **Deliverables:** A prioritized workflow-improvement `tasks.md` (with status), updated agent definitions, workflow documentation updates, PRs with workflow changes.
 - **Definition of Done:** Workflow changes are documented, committed, and PR is created.
 - **Note:** This agent operates outside the normal feature development flow. Use it when you want to improve the development process itself.
+
+### 13. Web Designer (Specialized Agent)
+- **Goal:** Design, develop, and maintain the tfplan2md website hosted on GitHub Pages.
+- **Deliverables:** Website pages (HTML/CSS), design prototypes, website content derived from existing documentation.
+- **Initial Creation:** Handoff from Architect after technical approach is defined.
+- **Ongoing Changes:** Direct handoff from Maintainer for content, design, or functionality updates.
+- **Definition of Done:** Website changes are complete, accessible (WCAG 2.1 AA), responsive, and PR is created.
+- **Note:** This agent operates independently for website-specific work. Website files live in `/website/` directory with isolated CI/CD pipeline triggers.
 
 ---
 
@@ -303,21 +326,37 @@ _Agents produce and consume artifacts. Arrows show artifact creation and consump
 
 This section describes the purpose and format of each artifact produced and consumed in the workflow.
 
+### Documentation Folder Naming (Global Sequence)
+
+To make feature/issue/workflow documentation easier to scan in chronological development order, subfolders under `docs/features/`, `docs/issues/`, and `docs/workflow/` use a **global, monotonically increasing** numeric prefix.
+
+- **Format:** `NNN-<topic-slug>/` (3 digits, zero-padded)
+- **Examples:** `docs/features/020-custom-report-title/`, `docs/issues/015-totals-count-mismatch-in-summary-table/`, `docs/workflow/023-retrospective-2025-12-28/`
+
+#### Parallel Work Rule ("First Merge Wins")
+
+When multiple branches are created in parallel, they may independently pick the same next `NNN`.
+
+- The **first PR that merges** keeps its chosen `NNN`.
+- Any later PR that conflicts must **renumber its folder(s)** to the next available `NNN` **before merge**.
+- Renumbering must include updating any affected intra-doc links under `docs/`.
+
 | Artifact | Purpose | Format | Location |
 |----------|---------|--------|----------|
-| **Issue Analysis** | Documents bug reports, diagnostic information, root cause analysis, and suggested fix approach. Serves as the foundation for implementing fixes. | Markdown document with sections: Problem Description, Steps to Reproduce, Root Cause Analysis, Suggested Fix Approach, Related Tests. | `docs/issues/<issue-description>/analysis.md` |
-| **Feature Specification** | Documents user needs, goals, and scope from an end-user perspective. Serves as the foundation for architecture and planning. | Markdown document with sections: Overview, User Goals, Scope, Out of Scope, Success Criteria. | `docs/features/<feature-name>/specification.md` |
-| **Architecture Decision Records (ADRs)** | Captures significant design decisions, alternatives considered, and rationale. Provides context for future maintainers. | Markdown following the ADR format: Context, Decision, Consequences. | `docs/adr-<number>-<short-title>.md` (high level / general decisions) and `docs/features/<feature-name>/architecture.md` (feature-specific decisions) |
-| **User Stories / Tasks** | Actionable work items with clear acceptance criteria. Used to track implementation progress. | Markdown document with: Title, Description, Acceptance Criteria checklist, Priority. | `docs/features/<feature-name>/tasks.md` |
-| **Test Plan & Test Cases** | Defines how the feature will be verified. Maps test cases to acceptance criteria. For user-facing features, includes user acceptance scenarios for manual review. | Markdown document with: Test Objectives, Test Cases (ID, Description, Steps, Expected Result), Coverage Matrix, User Acceptance Scenarios (for user-facing features). | `docs/features/<feature-name>/test-plan.md` |
+| **Issue Analysis** | Documents bug reports, diagnostic information, root cause analysis, and suggested fix approach. Serves as the foundation for implementing fixes. | Markdown document with sections: Problem Description, Steps to Reproduce, Root Cause Analysis, Suggested Fix Approach, Related Tests. | `docs/issues/NNN-<issue-slug>/analysis.md` |
+| **Feature Specification** | Documents user needs, goals, and scope from an end-user perspective. Serves as the foundation for architecture and planning. | Markdown document with sections: Overview, User Goals, Scope, Out of Scope, Success Criteria. | `docs/features/NNN-<feature-slug>/specification.md` |
+| **Architecture Decision Records (ADRs)** | Captures significant design decisions, alternatives considered, and rationale. Provides context for future maintainers. | Markdown following the ADR format: Context, Decision, Consequences. | `docs/adr-<number>-<short-title>.md` (high level / general decisions) and `docs/features/NNN-<feature-slug>/architecture.md` (feature-specific decisions) |
+| **User Stories / Tasks** | Actionable work items with clear acceptance criteria. Used to track implementation progress (features) or workflow improvement work (workflow). | Markdown. For workflow improvements, use a table with a Status column (icon + text) and a short rationale per item. | `docs/features/NNN-<feature-slug>/tasks.md` and `docs/workflow/NNN-<topic-slug>/tasks.md` |
+| **Test Plan & Test Cases** | Defines how the feature will be verified. Maps test cases to acceptance criteria. For user-facing features, includes user acceptance scenarios for manual review. | Markdown document with: Test Objectives, Test Cases (ID, Description, Steps, Expected Result), Coverage Matrix, User Acceptance Scenarios (for user-facing features). | `docs/features/NNN-<feature-slug>/test-plan.md` |
 | **User Acceptance PRs** | Real-environment verification for user-facing features (especially markdown rendering). Used to catch rendering bugs and validate real-world usage. Managed by UAT Tester agent. | Temporary PRs in GitHub and Azure DevOps. Markdown report is posted as **PR comment** (not description). Fixes posted as new comments. Agent polls automatically; approved when Maintainer comments "approved"/"passed" or (Azure DevOps) marks thread "Resolved" or (GitHub) closes PR. PRs cleaned up after approval. | GitHub + Azure DevOps (via `scripts/uat-*.sh`) |
 | **Code & Tests** | Implementation of the feature including unit tests, integration tests, and any necessary refactoring. | Source code files following project conventions. Tests in `tests/` directory. | `src/` and `tests/` directories |
 | **Documentation** | Updated user-facing and developer documentation reflecting the new feature. | Markdown files following existing documentation structure. | `docs/`, `README.md` |
-| **Code Review Report** | Feedback on code quality, adherence to standards, and approval status. May request rework. | Markdown document with: Summary, Issues Found, Recommendations, Approval Status. | `docs/features/<feature-name>/code-review.md` |
+| **Code Review Report** | Feedback on code quality, adherence to standards, and approval status. May request rework. | Markdown document with: Summary, Issues Found, Recommendations, Approval Status. | `docs/features/NNN-<feature-slug>/code-review.md` |
 | **Pull Request** | Pull request created for merging the feature branch into main. Triggers CI/CD pipeline for validation and deployment. | GitHub Pull Request with title, description, and link to feature documentation. | GitHub repository |
 | **Release Notes** | Summary of changes, new features, bug fixes, and breaking changes for the release. | Markdown following conventional changelog format. Auto-generated by Versionize in CI. | `CHANGELOG.md` |
-| **Retrospective Report** | Summary of the development cycle, highlighting successes, failures, and improvement opportunities. | Markdown document with sections: Summary, What Went Well, What Didn't Go Well, Improvement Opportunities. | `docs/features/<feature-name>/retrospective.md` or `docs/issues/<issue-id>/retrospective.md` |
+| **Retrospective Report** | Summary of the development cycle, highlighting successes, failures, and improvement opportunities. | Markdown document with sections: Summary, What Went Well, What Didn't Go Well, Improvement Opportunities; include action items with change location + verification method, CI/status-check summary when applicable, automation opportunities (including suggested skills/scripts), and a Retrospective DoD checklist. | `docs/features/NNN-<feature-slug>/retrospective.md` or `docs/issues/NNN-<issue-slug>/retrospective.md` |
 | **Workflow Documentation** | Updated agent definitions and workflow documentation reflecting process improvements. | Agent markdown files and workflow docs. | `.github/agents/*.agent.md`, `docs/agents.md` |
+| **Website** | Static website for tfplan2md hosted on GitHub Pages. Includes design, content, and implementation. | HTML/CSS files with responsive design and WCAG 2.1 AA accessibility. | `/website/` directory |
 
 ---
 
@@ -325,11 +364,22 @@ This section describes the purpose and format of each artifact produced and cons
 
 Different types of work use different branch prefixes to maintain clarity:
 
+To support prompt-file automation (inferring the current work item from the git branch name), branches for features, fixes, and workflow improvements must include the numeric work item prefix (`NNN`) that matches the corresponding folder under `docs/`.
+
+The work item prefix (`NNN`) is **global and unique across change types** (features, issues, and workflow improvements). Do not reuse a number for a different change type.
+
+Example: If the most recent feature is `025-...` and a workflow item `026-...` already exists, the next new feature must be `027-...` (not `026-...`).
+
+- `feature/<NNN>-<slug>`  `docs/features/<NNN>-<feature-slug>/`
+- `fix/<NNN>-<slug>`  `docs/issues/<NNN>-<issue-slug>/`
+- `workflow/<NNN>-<slug>`  `docs/workflow/<NNN>-<workflow-slug>/`
+
 | Work Type | Branch Prefix | Example | Used By Agent |
 |-----------|---------------|---------|---------------|
 | Feature Development | `feature/` | `feature/123-firewall-diff-display` | Requirements Engineer, Developer |
-| Bug Fixes / Incidents | `fix/` | `fix/docker-hub-secret-in-release-workflow` | Issue Analyst, Developer |
-| Workflow Improvements | `workflow/` | `workflow/add-security-agent` | Workflow Engineer |
+| Bug Fixes / Incidents | `fix/` | `fix/004-release-pipeline-failure-awk` | Issue Analyst, Developer |
+| Workflow Improvements | `workflow/` | `workflow/028-improvement-opportunities` | Workflow Engineer |
+| Website Changes | `feature/website-` | `feature/website-homepage-redesign` | Web Designer |
 
 **Note:** The Requirements Engineer creates the feature branch at the start of the feature workflow. The Issue Analyst creates the fix branch at the start of the bug fix workflow. All subsequent agents work on the same branch until Release Manager creates the pull request.
 
@@ -344,17 +394,20 @@ Each agent hands off to the next by producing a specific deliverable. The workfl
 | Issue Analyst           | Developer               | Issue Analysis with root cause and fix approach      |
 | Requirements Engineer   | Architect               | Feature Specification                                |
 | Architect               | Quality Engineer        | Architecture Decision Records (ADRs)                 |
+| Architect               | Web Designer            | Architecture/technical approach (for initial website creation only) |
 | Quality Engineer        | Task Planner            | Test Plan & Test Cases                               |
 | Task Planner            | Developer               | User Stories / Tasks with Acceptance Criteria        |
 | Developer               | Technical Writer        | Code & Tests                                         |
 | Technical Writer        | Code Reviewer           | Updated Documentation                                |
 | Code Reviewer           | UAT Tester (user-facing features) <br/> Release Manager (internal changes) <br/> Developer (rework needed) | Code Review Report |
-| UAT Tester              | Release Manager (approved) <br/> Developer (rendering issues) | User Acceptance PRs verified in both platforms |
+| UAT Tester              | Release Manager (approved) <br/> Developer (rendering issues) | User Acceptance PRs verified |
 | Release Manager         | CI/CD Pipeline, GitHub  | Pull Request, Release Notes                          |
 | Release Manager         | Retrospective           | Deployment Complete                                  |
 | Retrospective           | Workflow Engineer       | Retrospective Report with Action Items               |
+| Web Designer            | Release Manager         | Website changes complete (design, content, implementation) |
+| Maintainer              | Web Designer            | Direct request for website changes (ongoing maintenance) |
 
-**Exception:** Code Reviewer has three possible handoffs depending on approval status and feature type. UAT Tester hands back to Developer if rendering issues are found. Release Manager may hand back to Developer if build/release fails.
+**Exception:** Code Reviewer has three possible handoffs depending on approval status and feature type. UAT Tester hands to Release Manager when approved, or back to Developer if rendering issues are found. Release Manager may hand back to Developer if build/release fails.
 
 Handoffs are triggered when the deliverable is complete and meets the "Definition of Done" for that agent. Automation (e.g., GitHub Actions) can be used to detect completion and notify the next agent(s).
 
@@ -368,6 +421,50 @@ All agent coordination is managed by the **Maintainer**:
 2. **Providing context** - The Maintainer points the agent to relevant artifacts from previous steps (e.g., "Review the specification in docs/features/X/specification.md").
 3. **Handoff buttons** - Agents provide handoff buttons that pre-fill prompts for the next agent in the workflow.
 4. **Feedback relay** - If an agent needs clarification from a previous step, it asks the Maintainer, who either answers directly or relays the question to the appropriate agent.
+
+**When an agent is blocked and needs more input:** It must explicitly say it is blocked, summarize progress so far, and provide clear **Next** options to unblock it (plus at most one clarifying question at a time).
+
+### Prompt Files (Recommended for New Chat Sessions)
+
+When the Maintainer prefers to start a **new** chat session (instead of continuing in the same chat via handoff buttons), use workspace prompt files in `.github/prompts/`.
+
+Prompt files can be run by typing `/` in chat and selecting the prompt, or by running **Chat: Run Prompt** from the Command Palette.
+
+This repository provides prompt files in `.github/prompts/`.
+
+### Default prompts
+
+Default prompts use the short agent names (e.g., `/dev`). These are the default actions each agent performs in the workflow:
+
+- `/re` Requirements Engineer
+- `/ia` Issue Analyst
+- `/wd` Web Designer
+- `/ar` Architect (matches Requirements Engineer -> Architect handoff)
+- `/qe` Quality Engineer (matches Architect -> Quality Engineer handoff)
+- `/tp` Task Planner (matches Quality Engineer -> Task Planner handoff)
+- `/dev` Developer (matches Task Planner -> Developer handoff)
+- `/tw` Technical Writer (matches Developer -> Technical Writer handoff)
+- `/cr` Code Reviewer (matches Technical Writer -> Code Reviewer handoff)
+- `/uat` UAT Tester (matches Code Reviewer -> UAT Tester handoff)
+- `/rm` Release Manager (matches UAT Tester -> Release Manager handoff)
+- `/retro` Retrospective (matches Release Manager -> Retrospective handoff)
+- `/we` Workflow Engineer (matches Retrospective -> Workflow Engineer handoff)
+
+### Non-default prompts
+
+Non-default prompts add a suffix describing what the agent should do instead of its default workflow action:
+
+- `/ia-from-gh-issue` Issue Analyst (start from a GitHub issue)
+- `/dev-rework-cr-failed` Developer rework (Code Reviewer requested changes)
+- `/dev-rework-uat-failed` Developer rework (UAT failed)
+- `/dev-fix-build-failed` Developer fix (CI/release build failed)
+- `/dev-fix-ia-handoff` Developer fix (Issue Analyst -> Developer transition; uses `analysis.md`)
+- `/rm-no-uat` Release Manager (prepare release with no UAT)
+- `/rm-website-pr` Release Manager (create PR for website changes)
+
+For prompts that correspond to a workflow handoff, the prompt text is kept identical to the handoff button prompt.
+
+For consistent inference, use the `feature/<NNN>-...`, `fix/<NNN>-...`, or `workflow/<NNN>-...` branch formats described in the Branch Naming Conventions section.
 
 This approach keeps the workflow simple and gives the Maintainer full visibility and control over all agent interactions.
 
