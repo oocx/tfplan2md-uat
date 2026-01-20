@@ -24,6 +24,7 @@ Use these branch prefixes:
 - `refactor/` — Code refactoring
 - `chore/` — Maintenance tasks
 - `workflow/` — Agent/workflow changes (`.github/agents/`, workflow documentation)
+- `website/` — Website changes (`website/` directory)
 
 ## Testing Requirements
 
@@ -211,7 +212,7 @@ Examples:
 /// <returns>Collection of resource changes found in the plan.</returns>
 /// <remarks>
 /// Uses streaming deserialization for memory efficiency on large files.
-/// Related feature: docs/features/comprehensive-demo/
+/// Related feature: docs/features/008-comprehensive-demo/
 /// </remarks>
 internal async Task<IReadOnlyList<ResourceChange>> ParseAsync(string planFilePath)
 {
