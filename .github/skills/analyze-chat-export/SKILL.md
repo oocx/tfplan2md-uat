@@ -7,7 +7,7 @@ compatibility: Requires jq for JSON processing. Chat must be exported first usin
 # Analyze Chat Export
 
 ## Purpose
-Extract structured metrics from VS Code Copilot chat exports to support retrospective analysis. Provides data on model usage, tool invocations, manual approvals, and session timing.
+Extract structured metrics from VS Code Copilot chat exports to support retrospective analysis. Provides data on model usage, tool invocations, manual approvals, rejection patterns, file edit statistics, and session timing.
 
 ## Hard Rules
 ### Must
@@ -21,7 +21,7 @@ Extract structured metrics from VS Code Copilot chat exports to support retrospe
 
 ## Pre-requisites
 - `jq` command-line JSON processor installed.
-- Chat export file (`.json`) already saved via `workbench.action.chat.export` command.
+- Chat export files (`.json`) saved via `workbench.action.chat.export` command. Multiple files may exist per feature, one per agent chat session (e.g., `developer.chat.json`, `architect.chat.json`).
 
 ## Known Limitations
 
@@ -41,7 +41,7 @@ The chat export only contains the VS Code infrastructure agent (`github.copilot.
 **Recommended: Use the extraction script**
 ```bash
 # Generate analysis files (both markdown and JSON)
-.github/skills/analyze-chat-export/extract-metrics.sh docs/features/<feature-name>/chat.json docs/features/<feature-name>/chat-metrics
+.github/skills/analyze-chat-export/extract-metrics.sh docs/features/NNN-<feature-slug>/chat.json docs/features/NNN-<feature-slug>/chat-metrics
 ```
 
 This creates:
@@ -98,15 +98,15 @@ See these reference documents:
 ## Actions
 
 ### 1. Export Chat (Prerequisite)
-Ask the Maintainer to:
-1. Focus the chat panel.
+Ask the Maintainer to export each relevant agent session chat:
+1. Focus the chat panel for the agent session to export.
 2. Run command: `workbench.action.chat.export`
-3. Save to: `docs/features/<feature-name>/chat.json`
+3. Save to: `docs/features/NNN-<feature-slug>/<agent-name>.chat.json` (e.g., `developer.chat.json`, `architect.chat.json`)
 
 ### 2. Run Extraction Script (Recommended)
 ```bash
 # Generate analysis report (creates both .md and .json files)
-.github/skills/analyze-chat-export/extract-metrics.sh docs/features/<feature-name>/chat.json docs/features/<feature-name>/chat-metrics
+.github/skills/analyze-chat-export/extract-metrics.sh docs/features/NNN-<feature-slug>/chat.json docs/features/NNN-<feature-slug>/chat-metrics
 ```
 
 This creates two files:
@@ -128,7 +128,7 @@ For custom analysis or debugging, use individual jq queries.
 
 #### Session Metrics
 ```bash
-CHAT_FILE="docs/features/<feature-name>/chat.json"
+CHAT_FILE="docs/features/NNN-<feature-slug>/chat.json"
 
 # Total requests/turns
 jq '.requests | length' "$CHAT_FILE"
