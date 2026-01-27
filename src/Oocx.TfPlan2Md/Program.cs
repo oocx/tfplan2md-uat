@@ -1,8 +1,18 @@
+// Triggering release after CI fix
+// Baseline suppression for code-quality metrics rollout.
+// Related feature: docs/features/046-code-quality-metrics-enforcement/.
+#pragma warning disable CA1506
+
 using System.Reflection;
-using Oocx.TfPlan2Md.Azure;
 using Oocx.TfPlan2Md.CLI;
+using Oocx.TfPlan2Md.Diagnostics;
 using Oocx.TfPlan2Md.MarkdownGeneration;
 using Oocx.TfPlan2Md.Parsing;
+using Oocx.TfPlan2Md.Platforms.Azure;
+using Oocx.TfPlan2Md.Providers;
+using Oocx.TfPlan2Md.Providers.AzApi;
+using Oocx.TfPlan2Md.Providers.AzureDevOps;
+using Oocx.TfPlan2Md.Providers.AzureRM;
 
 var options = ParseArguments(args);
 if (options is null)
@@ -59,6 +69,9 @@ static CliOptions? ParseArguments(string[] args)
 
 static async Task<int> RunAsync(CliOptions options)
 {
+    // Create diagnostic context if debug mode is enabled
+    var diagnosticContext = options.Debug ? new DiagnosticContext() : null;
+
     // Read input
     string json;
     if (options.InputFile is not null)
@@ -81,17 +94,31 @@ static async Task<int> RunAsync(CliOptions options)
     var parser = new TerraformPlanParser();
     var plan = parser.Parse(json);
 
+    // Create principal mapper for resolving principal names in role assignments
+    var principalMapper = new PrincipalMapper(options.PrincipalMappingFile, diagnosticContext);
+
+    // Create and configure provider registry
+    var providerRegistry = new ProviderRegistry();
+    providerRegistry.RegisterProvider(new AzApiModule());
+    providerRegistry.RegisterProvider(new AzureRMModule(
+        largeValueFormat: ReportModelBuilder.ConvertRenderTargetToLargeValueFormat(options.RenderTarget),
+        principalMapper: principalMapper));
+    providerRegistry.RegisterProvider(new AzureDevOpsModule(
+        largeValueFormat: ReportModelBuilder.ConvertRenderTargetToLargeValueFormat(options.RenderTarget)));
+
     // Build the report model
     var modelBuilder = new ReportModelBuilder(
         showSensitive: options.ShowSensitive,
         showUnchangedValues: options.ShowUnchangedValues,
-        largeValueFormat: options.LargeValueFormat);
+        renderTarget: options.RenderTarget,
+        reportTitle: options.ReportTitle,
+        principalMapper: principalMapper,
+        hideMetadata: options.HideMetadata,
+        providerRegistry: providerRegistry);
     var model = modelBuilder.Build(plan);
 
-    var principalMapper = new PrincipalMapper(options.PrincipalMappingFile);
-
     // Render to Markdown
-    var renderer = new MarkdownRenderer(principalMapper);
+    var renderer = new MarkdownRenderer(principalMapper, diagnosticContext, providerRegistry);
     string markdown;
     if (options.TemplatePath is not null)
     {
@@ -100,6 +127,12 @@ static async Task<int> RunAsync(CliOptions options)
     else
     {
         markdown = renderer.Render(model);
+    }
+
+    // Append debug section if diagnostic context exists
+    if (diagnosticContext is not null)
+    {
+        markdown += "\n\n" + diagnosticContext.GenerateMarkdownSection();
     }
 
     // Write output
@@ -127,3 +160,5 @@ static void PrintVersion()
         ?.InformationalVersion ?? "0.0.0";
     Console.WriteLine($"tfplan2md {version}");
 }
+
+#pragma warning restore CA1506
