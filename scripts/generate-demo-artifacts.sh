@@ -45,25 +45,25 @@ fi
 
 log_info "✓ artifacts/comprehensive-demo.md generated successfully (inline-diff)"
 
-log_info "Generating artifacts/comprehensive-demo-standard-diff.md (for GitHub UAT)..."
+log_info "Generating artifacts/comprehensive-demo-simple-diff.md (for GitHub UAT)..."
 dotnet run --project src/Oocx.TfPlan2Md/Oocx.TfPlan2Md.csproj --no-build -c Release -- \
   --principal-mapping examples/comprehensive-demo/demo-principals.json \
-  --large-value-format standard-diff \
-  --output artifacts/comprehensive-demo-standard-diff.md \
+  --render-target github \
+  --output artifacts/comprehensive-demo-simple-diff.md \
   examples/comprehensive-demo/plan.json
 
-if [[ ! -s artifacts/comprehensive-demo-standard-diff.md ]]; then
-  log_error "Generated artifact is empty or missing: artifacts/comprehensive-demo-standard-diff.md"
+if [[ ! -s artifacts/comprehensive-demo-simple-diff.md ]]; then
+  log_error "Generated artifact is empty or missing: artifacts/comprehensive-demo-simple-diff.md"
   exit 1
 fi
 
-log_info "✓ artifacts/comprehensive-demo-standard-diff.md generated successfully"
+log_info "✓ artifacts/comprehensive-demo-simple-diff.md generated successfully"
 
 log_info "Generating artifacts/role.md (role assignments with principal mapping)..."
 dotnet run --project src/Oocx.TfPlan2Md/Oocx.TfPlan2Md.csproj --no-build -c Release -- \
   --principal-mapping examples/comprehensive-demo/demo-principals.json \
   --output artifacts/role.md \
-  tests/Oocx.TfPlan2Md.Tests/TestData/role-assignments.json
+  src/tests/Oocx.TfPlan2Md.TUnit/TestData/role-assignments.json
 
 if [[ -s artifacts/role.md ]]; then
   log_info "✓ artifacts/role.md generated successfully"
@@ -75,12 +75,24 @@ fi
 log_info "Generating artifacts/role-default.md (role assignments without principal mapping)..."
 dotnet run --project src/Oocx.TfPlan2Md/Oocx.TfPlan2Md.csproj --no-build -c Release -- \
   --output artifacts/role-default.md \
-  tests/Oocx.TfPlan2Md.Tests/TestData/role-assignments.json
+  src/tests/Oocx.TfPlan2Md.TUnit/TestData/role-assignments.json
 
 if [[ -s artifacts/role-default.md ]]; then
   log_info "✓ artifacts/role-default.md generated successfully"
 else
   log_error "Failed to generate artifacts/role-default.md"
+  exit 1
+fi
+
+log_info "Generating artifacts/apim-display-enhancements-demo.md (APIM display enhancements demo)..."
+dotnet run --project src/Oocx.TfPlan2Md/Oocx.TfPlan2Md.csproj --no-build -c Release -- \
+  --output artifacts/apim-display-enhancements-demo.md \
+  examples/apim-display-enhancements.json
+
+if [[ -s artifacts/apim-display-enhancements-demo.md ]]; then
+  log_info "✓ artifacts/apim-display-enhancements-demo.md generated successfully"
+else
+  log_error "Failed to generate artifacts/apim-display-enhancements-demo.md"
   exit 1
 fi
 

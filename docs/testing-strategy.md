@@ -2,7 +2,113 @@
 
 ## Overview
 
-The tfplan2md project uses a comprehensive testing strategy with **xUnit** as the test framework. All tests are located in the `Oocx.TfPlan2Md.Tests` project.
+The tfplan2md project uses a comprehensive testing strategy with **TUnit v1.9.26** as the test framework. All tests are located in the `Oocx.TfPlan2Md.TUnit` project.
+
+> **Note**: Legacy MSTest and xUnit test projects were removed as TUnit provides superior performance and reliability. All snapshot files were intentionally removed along with the legacy test projects as they are maintained only in the TUnit test project.
+
+## Test Infrastructure
+
+- **Test Framework**: TUnit 1.9.26 (async-first with real-time progress reporting)
+- **Test Location**: `src/tests/Oocx.TfPlan2Md.TUnit/`
+- **Test Execution**: `dotnet test --project src/tests/Oocx.TfPlan2Md.TUnit/` or use `scripts/test-with-timeout.sh`
+
+### TUnit CLI Syntax
+
+TUnit uses different CLI arguments compared to traditional test frameworks. All TUnit-specific flags must be passed after `--`:
+
+#### Filtering Tests
+```bash
+# Filter by class name (hierarchical pattern)
+dotnet test --treenode-filter /*/*/LoginTests/*
+
+# Filter by test name
+dotnet test --treenode-filter /*/*/*/AcceptCookiesTest
+
+# Filter by property/category
+dotnet test --treenode-filter /**[Category=Unit]
+
+# Exclude by category
+dotnet test --treenode-filter /**[Category!=Integration]
+
+# Multiple conditions (AND)
+dotnet test --treenode-filter /**[Category=Unit]&[Priority=High]
+```
+
+**Note**: TUnit uses `--treenode-filter` with hierarchical patterns (`/Assembly/Namespace/ClassName/TestName`), unlike traditional test frameworks.
+
+#### Output Control
+```bash
+# Normal output (only failures shown, buffered)
+dotnet test --output Normal
+
+# Detailed output (all tests shown, real-time)
+dotnet test --output Detailed
+
+# Disable progress reporting
+dotnet test --no-progress
+
+# Disable ANSI colors
+dotnet test --no-ansi
+```
+
+#### Log Levels
+```bash
+# Set log level for diagnostics
+dotnet test --log-level Trace      # Maximum detail
+dotnet test --log-level Debug      # Debug information
+dotnet test --log-level Information # Default
+dotnet test --log-level Warning    # Warnings and errors only
+dotnet test --log-level Error      # Errors only
+
+# Combine with output control
+dotnet test --output Detailed --log-level Debug
+```
+
+#### Common Examples
+```bash
+# Run all tests with detailed output
+scripts/test-with-timeout.sh -- dotnet test --solution src/tfplan2md.slnx --output Detailed
+
+# Run specific test class (from repo root, use --project)
+scripts/test-with-timeout.sh -- dotnet test --project src/tests/Oocx.TfPlan2Md.TUnit/ --treenode-filter /*/*/MarkdownRendererTests/*
+
+# Run tests with category, detailed output, and debug logging
+dotnet test --project src/tests/Oocx.TfPlan2Md.TUnit/ --treenode-filter /**[Category=Unit] --output Detailed --log-level Debug
+```
+
+### Why TUnit?
+
+Based on comprehensive analysis documented in `docs/test-framework-reliability.md`:
+
+**Performance**:
+- **7.8x faster** than traditional test frameworks
+- Consistent execution time (σ=0.06s)
+- 100% test coverage maintained (370 tests)
+
+**Hang Detection & Diagnostics**:
+- **Real-time progress reporting** with test name + elapsed time during execution
+- Detects hangs in **30-60 seconds**
+- **Time saved: ~2-4 hours per hang incident**
+- Full async stack traces with context
+- Reliability score: **10/10**
+
+**Architecture**:
+- **Async-first design**: All tests use `async Task`, prevents sync-over-async deadlocks
+- **Source generators**: Compile-time test discovery eliminates reflection overhead
+- **Built on Microsoft.Testing.Platform**: Modern, efficient test infrastructure
+- **Native AOT compatible**: Future-proof architecture
+
+### Test Configuration
+
+TUnit uses source-generator based discovery with the following configuration:
+
+```csharp
+// AssemblyInfo.cs - Parallelization at class level
+[assembly: Parallelize(Workers = 0, Scope = ExecutionScope.ClassLevel)]
+
+// .csproj - Suppressed analyzer warnings for test patterns
+<NoWarn>TUnit0055;TUnitAssertions0003;TUnitAssertions0005;TUnit0038;CA2201;IDE1006</NoWarn>
+```
 
 ## Test Types
 
@@ -93,18 +199,6 @@ scripts/uat-azdo.sh cleanup "$AZDO_PR"
 git checkout "$ORIGINAL_BRANCH"
 ```
 
-## Test Infrastructure
-
-- **Framework**: xUnit 2.9.3
-- **Assertion Library**: AwesomeAssertions (fluent-style assertions)
-- **Test SDK**: Microsoft.NET.Test.Sdk 17.14.1
-- **Coverage**: Coverlet 6.0.4
-- **Skippable Tests**: Xunit.SkippableFact 1.5.23 (for conditional test execution when Docker is unavailable)
-- **Shared Fixtures**: `DockerFixture` provides a shared Docker container context for integration tests using xUnit's `IAsyncLifetime` and `ICollectionFixture`
-- **Shell compatibility**: Release script tests include a POSIX-only run (`POSIXLY_CORRECT=1`) to ensure no GNU awk extensions are required.
-
-> Note: Tests were migrated from `xUnit.Assert` to `AwesomeAssertions` to improve readability and expressiveness of test assertions.
-
 ## Test Data
 
 Tests use a shared test data file `TestData/azurerm-azuredevops-plan.json` containing a realistic Terraform plan with:
@@ -137,16 +231,17 @@ For user-facing changes (especially markdown rendering), run UAT in real environ
 - GitHub PRs in `oocx/tfplan2md`
 - Azure DevOps PRs in `https://dev.azure.com/oocx` (project `test`, repository `test`)
 
-The UAT loop is **comment-driven**:
+The UAT loop is **comment-driven** and supports both approval and failure detection:
 
 1. Create a UAT PR and post the generated markdown as a PR **comment**.
 2. Maintainer reviews in the real PR UI and leaves feedback as PR comments/threads.
-3. Apply fixes, push updates, and post an updated PR comment.
-4. Repeat until Maintainer explicitly says **approve** or **abort**.
+3. **Approval**: Maintainer comments with keywords like `approved`, `passed`, `lgtm`. The script detects this and exits successfully.
+4. **Failure**: Maintainer comments with keywords like `fail`, `reject`, `error`, `bug`, `issue`, `regression`. The script detects this, stops polling, and exits with an error.
+5. If failure is detected, apply fixes on the feature branch and re-run UAT (the script will create a new unique UAT branch and PR).
 
 **Rules**:
-- Do not close/abandon UAT PRs unless the Maintainer explicitly says **approve** or **abort**.
-- Poll for new feedback until explicit approval/abort.
+- Do not close/abandon UAT PRs manually unless the script is stuck or Maintainer explicitly says **abort**.
+- The script polls for new feedback until explicit approval or failure detection.
 
 **Preferred: repo wrapper scripts (recommended)**
 
