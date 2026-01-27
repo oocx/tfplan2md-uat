@@ -1,10 +1,10 @@
 # Roadmap: Workflow Improvements (Q4 2025)
 
-**Source:** [Retrospective: Consistent Value Formatting](features/consistent-value-formatting/retrospective.md)
-**Date:** 2025-12-25
-**Status:** Complete
+**Source:** [Retrospective: Visual Report Enhancements](features/024-visual-report-enhancements/retrospective.md)
+**Date:** 2025-12-29
+**Status:** In Progress
 
-This roadmap outlines a series of workflow improvements derived from the "Consistent Value Formatting" feature retrospective. The goal is to reduce friction (especially in UAT), clarify agent roles, and improve process measurability.
+This roadmap outlines a series of workflow improvements derived from retrospectives. The goal is to reduce friction, clarify agent roles, and improve process reliability.
 
 ## 1. 🚨 UAT Tooling & Process Overhaul (High Priority)
 
@@ -24,7 +24,7 @@ This roadmap outlines a series of workflow improvements derived from the "Consis
 - ✅ Added UAT watch scripts/skills for polling: ([#90](https://github.com/oocx/tfplan2md/pull/90))
 - ✅ Hardened GitHub UAT polling to use structured JSON and filter agent comments: ([#92](https://github.com/oocx/tfplan2md/pull/92))
 - ✅ Added `scripts/uat-run.sh` end-to-end wrapper (GitHub + AzDO orchestration): ([#95](https://github.com/oocx/tfplan2md/pull/95))
-- ✅ Platform-specific artifact validation with smart defaults (inline-diff for AzDO, standard-diff for GitHub): ([#116](https://github.com/oocx/tfplan2md/pull/116))
+- ✅ Platform-specific artifact validation with smart defaults (inline-diff for AzDO, simple-diff for GitHub): ([#116](https://github.com/oocx/tfplan2md/pull/116))
 - ✅ Stable demo generation + snapshot update scripts reduce approval prompts from ~7-10 to 1-2: ([#117](https://github.com/oocx/tfplan2md/pull/117))
 - ✅ Migrated to tools-first approach: GitHub chat tools preferred over gh CLI for PR inspection/management ([#108](https://github.com/oocx/tfplan2md/pull/108), [#109](https://github.com/oocx/tfplan2md/pull/109))
 
@@ -77,3 +77,22 @@ This roadmap outlines a series of workflow improvements derived from the "Consis
 
 **Progress**
 - ✅ Added metrics guidance/templates as part of workflow docs updates: ([#84](https://github.com/oocx/tfplan2md/pull/84))
+
+## 5. 🛡️ Repository Integrity & Visual Feedback (High Priority)
+
+**Goal:** Prevent documentation loss and reduce visual rendering friction.
+
+*   **Scripting:** Create `scripts/safe-merge.sh` to verify file integrity post-merge.
+*   **Skills:** Implement `.github/skills/visual-validator/` for markdown-to-image rendering.
+*   **Process:** Add "Detail Checklist" to Developer and "Conflict Check" to Release Manager.
+*   **Commits:** Enforce "1 topic per commit" by amending previous commits for fixes to recent work.
+*   **Items:**
+    *   Automate post-merge file integrity verification.
+    *   Provide agents with visual feedback for markdown rendering.
+    *   Explicitly flag UAT rejections in test output.
+    *   Enforce detail-oriented checklists for UI/UX features.
+    *   Amend previous commits for immediate fixes to maintain clean history.
+
+**Progress**
+- ⏳ Proposed in [Workflow Improvements: 2025-12-29](workflow/025-improvements-2025-12-29/workflow-improvements.md)
+- ⏳ Follow-up tasks consolidated in [Workflow Improvements: 2025-12-31](workflow/026-improvements-2025-12-31/workflow-improvements.md)

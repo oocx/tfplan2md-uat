@@ -22,8 +22,8 @@ project.lock.json
 .idea/
 *.sln.iml
 
-# VS Code (uncomment if you want to ignore)
-# .vscode/
+# VS Code project settings
+.vscode/
 
 # Test results and coverage
 TestResults/
@@ -32,6 +32,8 @@ coverage/
 *.coveragexml
 CoverletSourceRootsMapping_*
 .msCoverageSourceRootsMapping_*
+!docs/coverage/
+!docs/coverage/history.json
 
 # OS generated files
 .DS_Store
@@ -40,6 +42,19 @@ Thumbs.db
 # Publish output
 publish/
 
+# Workspace temp files (agents must not write outside repo)
+.tmp/*
+!.tmp/.gitkeep
+
+# Temporary build/format output files
+build-output.txt
+build-verify*.txt
+format-*.txt
+format-*.json
+
 plan.tfplan
 # VS Code Copilot chat exports (large, may contain sensitive data)
 **/chat.json
+*.chat.json
+node_modules/
+.aider*

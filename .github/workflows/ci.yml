@@ -13,50 +13,16 @@ concurrency:
 
 permissions:
   contents: write
+  checks: write
+  pull-requests: read
 
+# CI Optimization: Tests removed from this workflow to eliminate redundancy.
+# All quality gates (format, build, test, lint, vulnerability scan) run in PR Validation.
+# This workflow only handles versioning after merge, reducing CI time significantly.
 jobs:
-  build:
-    name: Build and Test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-
-      - name: Generate comprehensive demo report
-        run: |
-          mkdir -p artifacts
-          dotnet run --project src/Oocx.TfPlan2Md/Oocx.TfPlan2Md.csproj -- examples/comprehensive-demo/plan.json --principals examples/comprehensive-demo/demo-principals.json --output artifacts/comprehensive-demo.md
-
-      - name: Lint comprehensive demo markdown
-        run: npx markdownlint-cli2 artifacts/comprehensive-demo.md
-
   version:
     name: Version and Tag
     runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Checkout
@@ -68,7 +34,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          global-json-file: global.json
+          global-json-file: src/global.json
 
       - name: Install Versionize
         run: dotnet tool install --global Versionize
