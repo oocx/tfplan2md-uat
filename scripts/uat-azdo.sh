@@ -7,7 +7,9 @@
 #   create <file> <test-description>   - Create a UAT PR with initial comment from <file>
 #                                         test-description: Detailed, resource-specific validation instructions
 #   comment <pr-id> <file> - Add a comment to PR from <file>
-#   poll <pr-id>    - Poll for new comments/threads and check for approval
+#   poll <pr-id> [--quiet] [--json] - Poll for new feedback and check for approval
+#                                   --quiet: Output only STATUS: APPROVED|WAITING|REJECTED|CLOSED|ERROR (agent-friendly)
+#                                   --json: Output raw PR JSON (PR + threads) for agent analysis
 #   cleanup <pr-id> - Abandon the PR after UAT completion
 #
 # Example:
@@ -67,11 +69,10 @@ cmd_setup() {
 cmd_create() {
     local file="${1:-}"
     local test_description="${2:-}"
-    local simulate="${UAT_SIMULATE:-false}"
     local force="${UAT_FORCE:-false}"
     
     # Validate and potentially set default artifact (platform-aware)
-    file="$(validate_artifact azdo "$file" "$simulate" "$force")"
+    file="$(validate_artifact azdo "$file" "$force")"
 
     if [[ -z "$test_description" ]]; then
         log_error "Test description is required. Usage: $0 create <file> <test-description>"
@@ -84,16 +85,10 @@ cmd_create() {
     local branch
     branch=$(git branch --show-current)
     local title="UAT: $(basename "$file" .md)"
-    
-    local simulation_header=""
-    if [[ "$simulate" == "true" ]]; then
-        title="[SIMULATION] $title"
-        simulation_header="> ⚠️ **SIMULATION MODE**\n> This is a test of the UAT process using standard artifacts. Reported issues are likely expected or already known.\n\n"
-    fi
 
     local description
     description=$(cat <<EOF
-${simulation_header}## Problem
+## Problem
 Validate markdown rendering in real PR UIs.
 
 ## Change
@@ -116,8 +111,8 @@ ${test_description}
    - Missing or malformed table borders
    - Broken links or incorrect formatting
 4. **Approve or provide feedback**:
-   - Comment "approved" or "lgtm" if rendering is correct
-   - Report specific issues if rendering problems are found
+    - Use **Approve** (vote) if rendering is correct
+    - Use **Reject / Waiting for author** and describe the issues if rendering problems are found
 
 ## Verification
 Maintainer visually reviews the PR comment rendering in Azure DevOps.
@@ -131,7 +126,8 @@ EOF
     fi
     
     log_info "Pushing branch to Azure DevOps..."
-    git push -u azdo HEAD:"$branch" --force
+    # Do NOT set upstream to the AzDO remote (prevents accidental subsequent pushes to the UAT repo).
+    git push azdo HEAD:"$branch" --force
     
     log_info "Creating PR..."
     local pr_result
@@ -213,39 +209,105 @@ cmd_comment() {
 }
 
 cmd_poll() {
-    local pr_id="${1:-}"
-    
+    local pr_id=""
+    local quiet=false
+    local json=false
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --quiet)
+                quiet=true
+                shift
+                ;;
+            --json)
+                json=true
+                shift
+                ;;
+            *)
+                if [[ -z "$pr_id" ]]; then
+                    pr_id="$1"
+                    shift
+                else
+                    log_error "Unknown argument: $1"
+                    exit 1
+                fi
+                ;;
+        esac
+    done
+
     if [[ -z "$pr_id" ]]; then
-        log_error "Usage: $0 poll <pr-id>"
+        log_error "Usage: $0 poll <pr-id> [--quiet] [--json]"
         exit 1
     fi
-    
-    log_info "Polling threads for PR #$pr_id..."
+
+    # JSON output is intended for machine/agent consumption; keep it JSON-only.
+    if [[ "$json" == "true" ]]; then
+        quiet=false
+    fi
+
+    if [[ "$quiet" != "true" && "$json" != "true" ]]; then
+        log_info "Polling PR status for #$pr_id..."
+    fi
 
     # First: check PR status + reviewer votes (strongest signal)
     local pr_json
-    pr_json=$(az repos pr show --id "$pr_id" --organization "$AZDO_ORG" --output json)
+    pr_json=$(az repos pr show --id "$pr_id" --organization "$AZDO_ORG" --output json 2>/dev/null || echo "")
+    if [[ -z "$pr_json" ]]; then
+        if [[ "$quiet" == "true" ]]; then
+            echo "STATUS: ERROR"
+        else
+            log_error "Failed to read PR JSON. Ensure az is authenticated and the PR exists."
+        fi
+        return 2
+    fi
 
     local pr_status
     pr_status=$(echo "$pr_json" | jq -r '.status // ""')
     if [[ "$pr_status" == "completed" ]]; then
-        echo -e "${GREEN}✓ PR COMPLETED${NC}"
-        echo "PR has been completed by Maintainer. UAT passed."
+        if [[ "$quiet" == "true" ]]; then
+            echo "STATUS: APPROVED"
+        elif [[ "$json" != "true" ]]; then
+            echo -e "${GREEN}✓ PR COMPLETED${NC}"
+            echo "PR has been completed."
+        fi
         return 0
     fi
 
     if [[ "$pr_status" == "abandoned" ]]; then
-        echo -e "${RED}✗ PR ABANDONED${NC}" >&2
-        echo "PR has been abandoned by Maintainer. Stopping polling." >&2
+        if [[ "$quiet" == "true" ]]; then
+            echo "STATUS: CLOSED"
+        elif [[ "$json" != "true" ]]; then
+            echo -e "${RED}✗ PR ABANDONED${NC}" >&2
+            echo "PR has been abandoned." >&2
+        fi
         return 2
     fi
 
-    # Azure DevOps reviewer votes: 10=approved, 5=approved with suggestions
+    # Azure DevOps reviewer votes: 10=approved, 5=approved with suggestions,
+    # 0=no vote, -5=waiting for author, -10=rejected
     local approved_vote_count
     approved_vote_count=$(echo "$pr_json" | jq '[.reviewers[]? | select((.vote // 0) >= 5)] | length')
+
+    local rejected_vote_count
+    rejected_vote_count=$(echo "$pr_json" | jq '[.reviewers[]? | select((.vote // 0) < 0)] | length')
+
+    if [[ "$rejected_vote_count" -gt 0 ]]; then
+        if [[ "$quiet" == "true" ]]; then
+            echo "STATUS: REJECTED"
+        elif [[ "$json" != "true" ]]; then
+            echo -e "${RED}✗ REVIEWER REJECTION DETECTED${NC}" >&2
+            echo "Found $rejected_vote_count reviewer vote(s) < 0 (waiting/rejected)." >&2
+        fi
+        return 2
+    fi
+
     if [[ "$approved_vote_count" -gt 0 ]]; then
-        echo -e "${GREEN}✓ REVIEWER APPROVAL DETECTED${NC}"
-        echo "Found $approved_vote_count reviewer approval vote(s). UAT passed."
+        if [[ "$quiet" == "true" ]]; then
+            echo "STATUS: APPROVED"
+        elif [[ "$json" != "true" ]]; then
+            echo -e "${GREEN}✓ REVIEWER APPROVAL DETECTED${NC}"
+            echo "Found $approved_vote_count reviewer approval vote(s)."
+        fi
         return 0
     fi
     
@@ -255,45 +317,30 @@ cmd_poll() {
         --resource pullrequestthreads \
         --route-parameters project="$AZDO_PROJECT" repositoryId="$AZDO_REPO" pullRequestId="$pr_id" \
         --api-version 7.1 \
-        --output json)
-    
-    # Check for approval keywords in NON-agent comments
-    # (agent comments include the marker line: "This comment was generated by an AI agent.")
-    local approval_found
-    approval_found=$(echo "$threads" |
-        jq -r '.value[].comments[]? | select((.content // "") | contains("This comment was generated by an AI agent.") | not) | .content // ""' |
-        grep -iE '(approved|passed|accept|lgtm)' || true)
+        --output json 2>/dev/null || echo "")
 
-    # Check for failure keywords in NON-agent comments.
-    local failure_found
-    failure_found=$(echo "$threads" |
-        jq -r '.value[].comments[]? | select((.content // "") | contains("This comment was generated by an AI agent.") | not) | .content // ""' |
-        grep -iE '(fail|reject|regression|issue|bug|error)' || true)
-    
-    echo ""
-    echo "=== Thread Summary ==="
-    echo "$threads" | jq -r '.value[] | "Thread \(.id): status=\(.status // "active"), comments=\(.comments | length)"'
-    echo ""
-    
-    # Show latest comments
-    echo "=== Recent Comments ==="
-    echo "$threads" | jq -r '.value[-3:][].comments[] | "[\(.author.displayName // "unknown")]: \(.content[0:200])"' 2>/dev/null || echo "(no comments)"
-    echo ""
+    if [[ "$json" == "true" ]]; then
+        jq -n --argjson pr "$pr_json" --argjson threads "${threads:-null}" '{pr:$pr, threads:$threads}'
+    fi
 
-    if [[ -n "$failure_found" ]]; then
-        echo -e "${RED}✗ FAILURE DETECTED IN COMMENTS${NC}"
-        echo "Failure keyword found in comments (e.g. \"fail\", \"reject\", \"error\"). Stopping UAT."
-        return 2
+    if [[ "$quiet" == "true" ]]; then
+        echo "STATUS: WAITING"
+        return 1
     fi
-    
-    if [[ -n "$approval_found" ]]; then
-        echo -e "${GREEN}✓ APPROVAL DETECTED${NC}"
-        echo "Approval keyword found in comments. UAT passed."
-        return 0
+
+    if [[ "$json" != "true" ]]; then
+        echo -e "${YELLOW}⏳ AWAITING REVIEW${NC}"
+        echo ""
+        echo "=== PR Summary (raw) ==="
+        echo "$pr_json" | jq -r '"status=\(.status // ""), url=\(.url // "")"' || true
+        echo ""
+        echo "=== Threads / Comments (raw, non-agent only) ==="
+        echo "$threads" | jq -r '.value[]? as $t
+            | $t.comments[]?
+            | select((.content // "") | contains("This comment was generated by an AI agent.") | not)
+            | "[\(.author.displayName // "unknown")]:\n\(.content // "")\n---"' || true
     fi
-    
-    echo -e "${YELLOW}⏳ AWAITING FEEDBACK${NC}"
-    echo "No approval detected yet. Continue polling or check Azure DevOps UI."
+
     return 1
 }
 
@@ -342,7 +389,9 @@ case "$action" in
         echo "  setup           - Configure Azure DevOps defaults and verify authentication"
         echo "  create <file>   - Create a UAT PR with initial comment from <file>"
         echo "  comment <pr-id> <file> - Add a comment to PR from <file>"
-        echo "  poll <pr-id>    - Poll for new comments/threads and check for approval"
+        echo "  poll <pr-id> [--quiet] [--json] - Poll for new feedback and check for approval"
+        echo "                                   --quiet: Output only STATUS: APPROVED|WAITING|REJECTED|CLOSED|ERROR"
+        echo "                                   --json: Output raw PR JSON (PR + threads) for agent analysis"
         echo "  cleanup <pr-id> - Abandon the PR after UAT completion"
         exit 1
         ;;
