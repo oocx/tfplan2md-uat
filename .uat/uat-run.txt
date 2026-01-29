@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260129073049
+Artifact: artifacts/azuread-enhancements-demo.md
