@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260131084149
+Artifact: artifacts/static-analysis-comprehensive-demo.md
