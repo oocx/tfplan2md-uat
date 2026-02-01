@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260201172130
+Artifact: artifacts/refactoring-demo-simple-diff.md
