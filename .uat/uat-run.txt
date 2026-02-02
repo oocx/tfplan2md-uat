@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260202231800
+Artifact: artifacts/uat-issue-058-focused.md
