@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260207150657
+Artifact: artifacts/extensible-registry-uat.md
