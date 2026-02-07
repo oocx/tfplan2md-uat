@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260207152555
+Artifact: artifacts/uat-minimal.md
