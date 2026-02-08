@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260208212841
+Artifact: artifacts/tenant-mapping-uat.md
