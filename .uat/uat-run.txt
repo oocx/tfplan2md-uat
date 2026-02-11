@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260211133037
+Artifact: artifacts/parent-child-resource-grouping-uat.md
