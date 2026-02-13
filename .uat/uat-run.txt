@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260213001526
+Artifact: artifacts/azure-rm-batch-2-uat.md
