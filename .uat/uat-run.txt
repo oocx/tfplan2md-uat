@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260215205535
+Artifact: .tmp/uat-085/azdo-principal-mapping-uat.md
