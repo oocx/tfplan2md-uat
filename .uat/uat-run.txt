@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260218070243
+Artifact: docs/features/086-output-display-enhancements/uat-plan.md
