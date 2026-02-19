@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260219190954
+Artifact: artifacts/details-display-mode-uat.md
