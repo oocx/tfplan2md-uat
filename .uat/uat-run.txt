@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260219053832
+Artifact: docs/issues/090-nested-array-shows-all-items/uat-plan.md
