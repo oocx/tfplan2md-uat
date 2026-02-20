@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260220182008
+Artifact: docs/features/094-build-definition-tables/uat-plan.md
