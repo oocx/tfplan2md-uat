@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260220223123
+Artifact: artifacts/azapi-update-resource-uat.md
