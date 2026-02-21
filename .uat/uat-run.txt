@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260221124626
+Artifact: artifacts/azuredevops-feature-096.md
