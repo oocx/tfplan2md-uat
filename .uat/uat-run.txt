@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260221120028
+Artifact: artifacts/comprehensive-demo.md
