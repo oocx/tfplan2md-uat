@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260222160422
+Artifact: docs/issues/098-sensitive-info-exposure/uat-plan.md
