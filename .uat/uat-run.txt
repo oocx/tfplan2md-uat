@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260222232408
+Artifact: artifacts/comprehensive-demo-simple-diff.md
