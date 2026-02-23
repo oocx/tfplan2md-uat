@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260223100137
+Artifact: docs/features/097-terraform-outputs/uat-plan.md
