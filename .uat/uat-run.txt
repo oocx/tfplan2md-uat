@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260223215643
+Artifact: artifacts/ephemeral-open.md
