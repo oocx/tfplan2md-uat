@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260225230945
+Artifact: docs/features/102-known-after-apply-rendering/uat-plan.md
