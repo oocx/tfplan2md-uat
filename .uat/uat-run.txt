@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260226185116
+Artifact: docs/features/103-azure-id-case-insensitive-filter/uat-plan.md
