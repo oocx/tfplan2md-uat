@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260228233400
+Artifact: docs/features/106-azapi-output-values/uat-plan.md
