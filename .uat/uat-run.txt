@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260420105657
+Artifact: docs/issues/120-msgraph-permissions-mapping-coverage/uat-plan.md
