@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260429225602
+Artifact: artifacts/feature-122-uat.md
