@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260512062105
+Artifact: docs/features/038-terraform-import-moved-blocks/uat-plan.md
