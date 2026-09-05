@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20260905125633
+Artifact: docs/features/145-drift-rendering/uat-plan.md
