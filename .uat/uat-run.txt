@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20261007175653
+Artifact: .tmp/feature-146-uat/github-default.md
