@@ -1,0 +1,3 @@
+UAT marker commit (GitHub)
+Timestamp: 20261016184814
+Artifact: docs/features/148-compact-collection-diffs/uat-plan.md
